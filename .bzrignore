@@ -31,3 +31,4 @@ src/debug
 src/Release
 src/release
 src/*.vcproj.*.user
+config
