@@ -1,0 +1,14 @@
+Version 0.2
+
+	* Upgrade to libusb-1.0
+	* API Changes:
+
+	      1. No need to initialize libusb anymore. Call freespace_init()
+		 and freespace_exit().
+	      2. freespace_open -> freespace_openDevice
+	      3. freespace_close -> freespace_closeDevice
+	      4. freespace_destroy -> freespace_freeDevice
+
+Version 0.1
+
+	* Initial release
