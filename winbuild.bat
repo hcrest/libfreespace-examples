@@ -1,6 +1,6 @@
 @echo off
 
-SET RELEASE_VERSION=0.3rc1
+SET RELEASE_VERSION=0.3rc2
 SET WORKDIR=libfreespace-examples
 SET ZIPNAME=libfreespace-examples-%RELEASE_VERSION%-win32
 
