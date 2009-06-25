@@ -137,7 +137,8 @@ static void* inputThreadFunction(void* arg) {
         int length;
 
         rc = freespace_read(device, buffer, sizeof(buffer), 1000 /* 1 second timeout */, &length);
-        if (rc == FREESPACE_ERROR_TIMEOUT) {
+        if (rc == FREESPACE_ERROR_TIMEOUT ||
+            rc == FREESPACE_ERROR_INTERRUPTED) {
             continue;
         }
         if (rc != FREESPACE_SUCCESS) {

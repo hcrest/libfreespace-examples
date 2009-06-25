@@ -105,7 +105,12 @@ int main(int argc, char* argv[]) {
         int length;
 
         rc = freespace_read(device, buffer, sizeof(buffer), 1000, &length);
-        if (rc == FREESPACE_ERROR_TIMEOUT) {
+        if (rc == FREESPACE_ERROR_TIMEOUT ||
+            rc == FREESPACE_ERROR_INTERRUPTED) {
+            // Both timeout and interrupted are ok.
+            // Timeout happens if there aren't any events for a second.
+            // Interrupted happens if you type CTRL-C or if you
+            // type CTRL-Z and background the app on Linux.
             continue;
         }
         if (rc != FREESPACE_SUCCESS) {

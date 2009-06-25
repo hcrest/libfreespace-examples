@@ -100,6 +100,8 @@ int main(int argc, char* argv[]) {
             freespace_printMessage(stdout, readBuffer, length);
         } else if (rc == FREESPACE_ERROR_TIMEOUT) {
             printf("<timeout>\n");
+        } else if (rc == FREESPACE_ERROR_INTERRUPTED) {
+            printf("<interrupted>\n");
         } else {
             printf("Error reading: %d. Quitting...\n", rc);
             break;
