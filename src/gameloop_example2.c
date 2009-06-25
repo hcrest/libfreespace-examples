@@ -45,6 +45,10 @@
 #include <freespace/freespace_codecs.h>
 #include "appControlHandler.h"
 
+#if defined __GLIBC__ && __GLIBC_PREREQ(2, 4)
+#define HAS_PPOLL
+#endif
+
 static struct pollfd* fds;
 static nfds_t nfds;
 static nfds_t maxfds;
@@ -198,10 +202,9 @@ static int getBodyFrameFromInputThread(FreespaceDeviceId device, struct freespac
     while (1) {
         int ready;
 
-#ifdef __APPLE__
+#ifndef HAS_PPOLL
         {
-            // @TODO use autoconf to figure out whether we have ppoll or not
-            // Also look into the signal handler race condition that ppoll fixes
+            // Look into the signal handler race condition that ppoll fixes
             // and either live with it or fix it here.
             ready = poll(fds, nfds, -1);
             if (ready < 0) {
