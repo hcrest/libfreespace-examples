@@ -119,6 +119,13 @@ int timer_step() {
 }
 #endif
 
+static int useBodyFrame = 1;
+static int sendMessageEachLoop = 0;
+
+static int isSDAReport(const char* buffer, int len) {
+    return len > 2 && buffer[0] == 0x08 && buffer[1] == 0x01;
+}
+
 static void receiveCallback(FreespaceDeviceId id,
                             const char* buffer,
                             int length,
@@ -134,15 +141,18 @@ static void receiveCallback(FreespaceDeviceId id,
             if (result != FREESPACE_SUCCESS) {
                 devices[idx].msgReadError++;
             }
-            freespace_decode_message((const int8_t*) buffer, length, &s);
-            if (s.messageType == FREESPACE_MESSAGE_BODYFRAME) {
-                if (devices[idx].sequenceNumber + 1 != s.bodyFrame.sequenceNumber && devices[idx].sequenceNumber != 0) {
-                    devices[idx].lostPackets = s.bodyFrame.sequenceNumber - devices[idx].sequenceNumber;
-                }
-                devices[idx].sequenceNumber = s.bodyFrame.sequenceNumber;
-            }
-
-            break;
+	    freespace_decode_message((const int8_t*) buffer, length, &s);
+	    if (useBodyFrame && s.messageType == FREESPACE_MESSAGE_BODYFRAME) {	          
+	        if (devices[idx].sequenceNumber + 1 != s.bodyFrame.sequenceNumber && devices[idx].sequenceNumber != 0) {
+		    devices[idx].lostPackets = s.bodyFrame.sequenceNumber - devices[idx].sequenceNumber;
+		}
+		devices[idx].sequenceNumber = s.bodyFrame.sequenceNumber;
+	    } else if (!useBodyFrame && isSDAReport(buffer, length)) {
+	        ++devices[idx].sequenceNumber;
+	    } else if (devices[idx].sequenceNumber == 0) {
+	        freespace_printMessage(stdout, buffer, length);
+	    }
+	    break;
         }
     }
     if (isProcessed == 0) {
@@ -185,13 +195,11 @@ static void initDevice(FreespaceDeviceId id) {
 
     // Display the device information.
     //printDeviceInfo(id);
-#if 0
     rc = freespace_flush(id);
     if (rc != 0) {
         printf("Error flushing device.\n");
         return;
     }
-#endif
 
     // Add the device to our list
     rc = 0;
@@ -217,15 +225,20 @@ static void initDevice(FreespaceDeviceId id) {
         printf("Could not add device.\n");
     }
 
-    d.enableBodyMotion = 1;
-    d.enableUserPosition = 0;
-    d.inhibitPowerManager = 1;
-    d.enableMouseMovement = 0;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
-    buffer[0] = 34;
-    buffer[1] = 0x20;
-    rc = 2;
+    if (useBodyFrame) {
+        d.enableBodyMotion = 1;
+	d.enableUserPosition = 0;
+	d.inhibitPowerManager = 1;
+	d.enableMouseMovement = 0;
+	d.disableFreespace = 0;
+	rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    } else {
+        // You have to know what you're doing to make sense of this
+        buffer[0] = 34;
+        buffer[1] = 0x20;
+        rc = 2;
+    }
+
     if (rc > 0) {
         rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
         //rc = freespace_send(id, buffer, rc);
@@ -233,7 +246,7 @@ static void initDevice(FreespaceDeviceId id) {
             printf("Could not send message: %d.\n", rc);
         }
     } else {
-        printf("Could not encode message.\n");
+        printf("Could not encode message %d\n", rc);
     }
     /** --- END EXAMPLE INITIALIZATION OF DEVICE -- **/
 }
@@ -251,9 +264,9 @@ static void cleanupDevice(FreespaceDeviceId id) {
             break;
         }
     }
-
+    
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
-    printf("%d> Sending message to enable mouse motion data.\n", id);
+     printf("%d> Sending message to enable mouse motion data.\n", id);
     d.enableBodyMotion = 0;
     d.enableUserPosition = 0;
     d.inhibitPowerManager = 0;
@@ -261,14 +274,23 @@ static void cleanupDevice(FreespaceDeviceId id) {
     d.disableFreespace = 0;
     rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
     if (rc > 0) {
-        rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
+        rc = freespace_send(id, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
             printf("Could not send message: %d.\n", rc);
-        }
+        } else {
+	    //flush it to clear the DMC response message that might come in
+	    freespace_flush(id);
+#ifdef WIN32
+	    Sleep(1);
+#else
+	    usleep(1000);
+#endif
+	    freespace_flush(id);
+	}
     } else {
         printf("Could not encode message.\n");
     }
-
+    //close it
     printf("%d> Cleaning up...\n", id);
     freespace_closeDevice(id);
     /** --- END EXAMPLE FINALIZATION OF DEVICE --- **/
@@ -277,7 +299,6 @@ static void cleanupDevice(FreespaceDeviceId id) {
 static void sendMessage(FreespaceDeviceId id) {
     int rc;
     char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
-    struct freespace_DataMotionControl d;
 
     rc = freespace_encodeProductIDRequest((int8_t*) buffer, sizeof(buffer));
     if (rc > 0) {
@@ -287,17 +308,22 @@ static void sendMessage(FreespaceDeviceId id) {
     if (rc > 0) {
         rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
     }
-
-    // Ensure in body frame mode.
-    d.enableBodyMotion = 1;
-    d.enableUserPosition = 0;
-    d.inhibitPowerManager = 1;
-    d.enableMouseMovement = 0;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
-    buffer[0] = 34;
-    buffer[1] = 0x20;
-    rc = 2;
+#if 0 //should only send this when changing modes
+    if (useBodyFrame) {
+        struct freespace_DataMotionControl d;
+        // Ensure in body frame mode.
+        d.enableBodyMotion = 1;
+	d.enableUserPosition = 0;
+	d.inhibitPowerManager = 1;
+	d.enableMouseMovement = 0;
+	d.disableFreespace = 0;
+	rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    } else {
+        // You have to know what you're doing to make sense of this
+        buffer[0] = 34;
+        buffer[1] = 0x20;
+        rc = 2;
+    }
     if (rc > 0) {
         rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
         if (rc != FREESPACE_SUCCESS) {
@@ -306,6 +332,7 @@ static void sendMessage(FreespaceDeviceId id) {
     } else {
         printf("Could not encode message.\n");
     }
+#endif
 }
 
 static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId id, void* cookie) {
@@ -320,6 +347,14 @@ static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId
 
 int main(int argc, char* argv[]) {
     int idx;
+
+    for (idx = 1; idx < argc; ++idx) {
+        if (strcmp(argv[idx], "--use-multifsm-board") == 0) {
+	    useBodyFrame = 0;
+	} else if (strcmp(argv[idx], "--send-message-each-loop") == 0) {
+	    sendMessageEachLoop = 1;
+	}
+    }
 
     addControlHandler();
 
@@ -356,16 +391,22 @@ int main(int argc, char* argv[]) {
                 if (devices[idx].id < 0) {
                     continue;
                 }
-                tmp = devices[idx].msgReadCurrent;
-                devices[idx].msgReadDelta = tmp - devices[idx].msgReadLast;
-                devices[idx].msgReadLast = tmp;
+		if (useBodyFrame) {
+		    tmp = devices[idx].msgReadCurrent;
+		    devices[idx].msgReadDelta = tmp - devices[idx].msgReadLast;
+		    devices[idx].msgReadLast = tmp;
 
-                tmp = devices[idx].msgSendCurrent;
-                devices[idx].msgSendDelta = tmp - devices[idx].msgSendLast;
-                devices[idx].msgSendLast = tmp;
+		    tmp = devices[idx].msgSendCurrent;
+		    devices[idx].msgSendDelta = tmp - devices[idx].msgSendLast;
+		    devices[idx].msgSendLast = tmp;
 
-                printf("[%02d: %02d %03d %05d]   ", devices[idx].id, devices[idx].msgSendDelta,
-                       devices[idx].msgReadDelta, devices[idx].lostPackets);
+		    printf("[%02d: %02d %03d %05d %d]   ", devices[idx].id, devices[idx].msgSendDelta,
+			   devices[idx].msgReadDelta, devices[idx].lostPackets, devices[idx].sequenceNumber);
+		} else {
+		    //print the read/send errored and count (sequenceNumber)
+		    printf("[%02d: %02d %02d %05d - %d %d]   ", devices[idx].id, devices[idx].msgReadError, 
+			   devices[idx].msgSendError, devices[idx].sequenceNumber, devices[idx].msgReadCurrent, devices[idx].msgSendCurrent);
+		}
                 offset++;
                 if (offset >= 3) {
                     printf("\n");
@@ -373,7 +414,9 @@ int main(int argc, char* argv[]) {
                 }
 
                 // Send out our message request message(s)
-                sendMessage(devices[idx].id);
+		if (sendMessageEachLoop) {
+		    sendMessage(devices[idx].id);
+		}
             }
             printf("\n");
         }
