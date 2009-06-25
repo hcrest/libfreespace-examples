@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "stdafx.h"
 #include <stdio.h>
 #else
@@ -55,7 +55,7 @@
 #define HAS_PPOLL
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 
 static HANDLE waitHandles[MAXIMUM_WAIT_OBJECTS];
 static DWORD waitHandleCount = 0;
@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
         if (timeoutMs < 0 || timeoutMs > TIMEOUT_MAX) {
             timeoutMs = TIMEOUT_MAX;
         }
-#ifdef WIN32
+#ifdef _WIN32
         {
             DWORD bResult = WaitForMultipleObjects(waitHandleCount, waitHandles, FALSE, (unsigned int) timeoutMs);
             if (bResult == WAIT_FAILED) {

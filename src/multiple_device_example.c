@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "stdafx.h"
 #include <stdio.h>
 #include <sys/types.h>
@@ -71,7 +71,7 @@ struct DeviceData {
 #define MAX_NUMBER_DEVICES 50
 struct DeviceData devices[MAX_NUMBER_DEVICES];
 
-#ifdef WIN32
+#ifdef _WIN32
 static struct _timeb lastTime;
 static struct _timeb nextTime;
 
@@ -336,7 +336,7 @@ int main(int argc, char* argv[]) {
     timer_initialize();
     while (!quit) {
         freespace_perform();
-#ifdef WIN32
+#ifdef _WIN32
         Sleep(1);
 #else
         usleep(1000);

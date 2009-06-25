@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "stdafx.h"
 #include <windows.h>
 #include <stdio.h>
@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
     while (!quit) {
         // Easy event loop - just poll freespace_perform periodically
         // rather than waiting on select or WaitForMultipleObjects
-#ifdef WIN32
+#ifdef _WIN32
         Sleep(100);
 #else
         sleep(1);
