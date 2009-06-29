@@ -253,6 +253,8 @@ int main(int argc, char* argv[]) {
     int numIds;
     int rc;
 
+    printVersionInfo(argv[0]);
+
     addControlHandler();
 
     // Initialize the freespace library

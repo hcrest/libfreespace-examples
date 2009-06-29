@@ -73,6 +73,8 @@ void hotplugCallback(enum freespace_hotplugEvent event,
 
 int main(int argc, char* argv[]) {
 
+    printVersionInfo(argv[0]);
+
     addControlHandler();
 
     // Initialize the freespace library

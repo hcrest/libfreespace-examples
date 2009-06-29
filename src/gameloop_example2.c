@@ -236,6 +236,8 @@ int main(int argc, char* argv[]) {
     struct freespace_BodyFrame body;
     FreespaceDeviceId device;
 
+    printVersionInfo(argv[0]);
+
     memset(&body, 0, sizeof(struct freespace_BodyFrame));
 
     addControlHandler();

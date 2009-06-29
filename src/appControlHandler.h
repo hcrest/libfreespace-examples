@@ -44,6 +44,7 @@ extern "C" {
 extern int quit;
 void addControlHandler();
 int printDeviceInfo(FreespaceDeviceId id);
+void printVersionInfo(const char* appname);
 
 #ifdef __cplusplus
 }

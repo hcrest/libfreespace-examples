@@ -46,6 +46,12 @@
 
 int quit = 0;
 
+void printVersionInfo(const char* appname) {
+    printf("%s: Using libfreespace %s\n",
+           appname,
+           freespace_version());
+}
+
 int printDeviceInfo(FreespaceDeviceId id) {
     struct FreespaceDeviceInfo info;
     int rc;

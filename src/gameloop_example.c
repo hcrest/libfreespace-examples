@@ -208,6 +208,8 @@ int main(int argc, char* argv[]) {
     struct InputLoopState inputLoop;
     struct freespace_BodyFrame body;
 
+    printVersionInfo(argv[0]);
+
     addControlHandler();
 
     initInputThread(&inputLoop);
