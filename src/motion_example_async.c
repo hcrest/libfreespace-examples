@@ -51,8 +51,10 @@
 
 #define TIMEOUT_MAX 1000
 
-#if defined __GLIBC__ && __GLIBC_PREREQ(2, 4)
+#if defined __GLIBC__
+#if __GLIBC_PREREQ(2, 4)
 #define HAS_PPOLL
+#endif
 #endif
 
 #ifdef _WIN32
