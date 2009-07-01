@@ -320,6 +320,7 @@ static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId
 
 int main(int argc, char* argv[]) {
     int idx;
+    int rc;
 
     printVersionInfo(argv[0]);
 
@@ -330,7 +331,11 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+        return 1;
+    }
     freespace_setDeviceHotplugCallback(hotplugCallback, NULL);
     freespace_perform();
     freespace_syncFileDescriptors();

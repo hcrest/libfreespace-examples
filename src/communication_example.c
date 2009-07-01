@@ -56,7 +56,11 @@ int main(int argc, char* argv[]) {
     addControlHandler();
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+	return 1;
+    }
 
     printf("Scanning for Freespace devices...\n");
     rc = freespace_getDeviceList(&device, 1, &numIds);

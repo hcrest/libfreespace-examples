@@ -94,7 +94,11 @@ static void* inputThreadFunction(void* arg) {
     int rc;
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+	exit(1);
+    }
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
     rc = freespace_getDeviceList(&device, 1, &numIds);

@@ -72,13 +72,18 @@ void hotplugCallback(enum freespace_hotplugEvent event,
 }
 
 int main(int argc, char* argv[]) {
+    int rc;
 
     printVersionInfo(argv[0]);
 
     addControlHandler();
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+	return 1;
+    }
 
     // Set the callback to catch the initial devices.
     printf("Detecting the Freespace devices already connected...\n");

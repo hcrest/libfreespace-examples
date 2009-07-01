@@ -115,7 +115,11 @@ static FreespaceDeviceId initializeFreespace() {
     int rc;
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+	return 1;
+    }
 
     init_waitset();
     freespace_setFileDescriptorCallbacks(add_pollfd, remove_pollfd);
