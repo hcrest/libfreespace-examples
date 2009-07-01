@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "stdafx.h"
 #include <windows.h>
 #include <stdio.h>
@@ -72,11 +72,18 @@ void hotplugCallback(enum freespace_hotplugEvent event,
 }
 
 int main(int argc, char* argv[]) {
+    int rc;
+
+    printVersionInfo(argv[0]);
 
     addControlHandler();
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+	return 1;
+    }
 
     // Set the callback to catch the initial devices.
     printf("Detecting the Freespace devices already connected...\n");
@@ -87,7 +94,7 @@ int main(int argc, char* argv[]) {
     while (!quit) {
         // Easy event loop - just poll freespace_perform periodically
         // rather than waiting on select or WaitForMultipleObjects
-#ifdef WIN32
+#ifdef _WIN32
         Sleep(100);
 #else
         sleep(1);

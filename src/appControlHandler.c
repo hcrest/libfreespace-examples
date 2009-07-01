@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "stdafx.h"
 #include <windows.h>
 #include <stdio.h>
@@ -45,6 +45,12 @@
 #include "appControlHandler.h"
 
 int quit = 0;
+
+void printVersionInfo(const char* appname) {
+    printf("%s: Using libfreespace %s\n",
+           appname,
+           freespace_version());
+}
 
 int printDeviceInfo(FreespaceDeviceId id) {
     struct FreespaceDeviceInfo info;
@@ -60,7 +66,7 @@ int printDeviceInfo(FreespaceDeviceId id) {
     return FREESPACE_SUCCESS;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 static BOOL CtrlHandler(DWORD fdwCtrlType) {
     quit = 1;
     return TRUE;

@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "stdafx.h"
 #include <stdio.h>
 #include <sys/types.h>
@@ -71,7 +71,7 @@ struct DeviceData {
 #define MAX_NUMBER_DEVICES 50
 struct DeviceData devices[MAX_NUMBER_DEVICES];
 
-#ifdef WIN32
+#ifdef _WIN32
 static struct _timeb lastTime;
 static struct _timeb nextTime;
 
@@ -347,6 +347,9 @@ static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId
 
 int main(int argc, char* argv[]) {
     int idx;
+    int rc;
+
+    printVersionInfo(argv[0]);
 
     for (idx = 1; idx < argc; ++idx) {
         if (strcmp(argv[idx], "--use-multifsm-board") == 0) {
@@ -363,7 +366,11 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+        return 1;
+    }
     freespace_setDeviceHotplugCallback(hotplugCallback, NULL);
     freespace_perform();
     freespace_syncFileDescriptors();
@@ -371,7 +378,7 @@ int main(int argc, char* argv[]) {
     timer_initialize();
     while (!quit) {
         freespace_perform();
-#ifdef WIN32
+#ifdef _WIN32
         Sleep(1);
 #else
         usleep(1000);

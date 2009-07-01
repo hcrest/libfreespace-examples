@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "stdafx.h"
 #include <stdio.h>
 #else
@@ -51,7 +51,14 @@
 
 #define TIMEOUT_MAX 1000
 
-#ifdef WIN32
+#if defined __GLIBC__
+#if __GLIBC_PREREQ(2, 4)
+#define HAS_PPOLL
+#endif
+#endif
+
+#ifdef _WIN32
+
 static HANDLE waitHandles[MAXIMUM_WAIT_OBJECTS];
 static DWORD waitHandleCount = 0;
 
@@ -242,19 +249,25 @@ static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId
     }
 }
 
+
 int main(int argc, char* argv[]) {
     FreespaceDeviceId deviceIds[FREESPACE_MAXIMUM_DEVICE_COUNT];
     int numIds;
     int rc;
 
+    printVersionInfo(argv[0]);
+
     addControlHandler();
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+	return 1;
+    }
 
     init_waitset();
-#ifndef WIN32
-#ifndef __APPLE__
+#ifdef HAS_PPOLL
     {
         // Signal handling when working with ppoll.
         sigset_t blockset;
@@ -263,7 +276,6 @@ int main(int argc, char* argv[]) {
         sigaddset(&blockset, SIGHUP);
         sigprocmask(SIG_BLOCK, &blockset, NULL);
     }
-#endif
 #endif
 
     freespace_setDeviceHotplugCallback(hotplugCallback, NULL);
@@ -280,7 +292,7 @@ int main(int argc, char* argv[]) {
         if (timeoutMs < 0 || timeoutMs > TIMEOUT_MAX) {
             timeoutMs = TIMEOUT_MAX;
         }
-#ifdef WIN32
+#ifdef _WIN32
         {
             DWORD bResult = WaitForMultipleObjects(waitHandleCount, waitHandles, FALSE, (unsigned int) timeoutMs);
             if (bResult == WAIT_FAILED) {
@@ -289,11 +301,10 @@ int main(int argc, char* argv[]) {
             }
         }
 #else
-#ifdef __APPLE__
+#ifndef HAS_PPOLL
         {
             int ready;
-            // @TODO use autoconf to figure out whether we have ppoll or not
-            // Also look into the signal handler race condition that ppoll fixes
+            // Look into the signal handler race condition that ppoll fixes
             // and either live with it or fix it here.
             ready = poll(fds, nfds, timeoutMs);
             if (ready < 0) {

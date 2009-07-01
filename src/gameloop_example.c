@@ -94,7 +94,11 @@ static void* inputThreadFunction(void* arg) {
     int rc;
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+	exit(1);
+    }
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
     rc = freespace_getDeviceList(&device, 1, &numIds);
@@ -137,7 +141,8 @@ static void* inputThreadFunction(void* arg) {
         int length;
 
         rc = freespace_read(device, buffer, sizeof(buffer), 1000 /* 1 second timeout */, &length);
-        if (rc == FREESPACE_ERROR_TIMEOUT) {
+        if (rc == FREESPACE_ERROR_TIMEOUT ||
+            rc == FREESPACE_ERROR_INTERRUPTED) {
             continue;
         }
         if (rc != FREESPACE_SUCCESS) {
@@ -206,6 +211,8 @@ static void* inputThreadFunction(void* arg) {
 int main(int argc, char* argv[]) {
     struct InputLoopState inputLoop;
     struct freespace_BodyFrame body;
+
+    printVersionInfo(argv[0]);
 
     addControlHandler();
 
