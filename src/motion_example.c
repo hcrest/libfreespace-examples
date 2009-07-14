@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "stdafx.h"
 #include <stdio.h>
 #else
@@ -53,10 +53,16 @@ int main(int argc, char* argv[]) {
     int numIds;
     int rc;
 
+    printVersionInfo(argv[0]);
+
     addControlHandler();
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+	return 1;
+    }
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
     printf("Scanning for Freespace devices...\n");
@@ -105,7 +111,12 @@ int main(int argc, char* argv[]) {
         int length;
 
         rc = freespace_read(device, buffer, sizeof(buffer), 1000, &length);
-        if (rc == FREESPACE_ERROR_TIMEOUT) {
+        if (rc == FREESPACE_ERROR_TIMEOUT ||
+            rc == FREESPACE_ERROR_INTERRUPTED) {
+            // Both timeout and interrupted are ok.
+            // Timeout happens if there aren't any events for a second.
+            // Interrupted happens if you type CTRL-C or if you
+            // type CTRL-Z and background the app on Linux.
             continue;
         }
         if (rc != FREESPACE_SUCCESS) {
