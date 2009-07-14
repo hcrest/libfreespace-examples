@@ -32,3 +32,4 @@ src/Release
 src/release
 src/*.vcproj.*.user
 config
+firmware_version_example
