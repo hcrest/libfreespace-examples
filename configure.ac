@@ -62,10 +62,11 @@ AC_CONFIG_FILES([
 
 if test "$with_tests" == "yes"
 then
+   TESTS_DIR=tests
    AC_CONFIG_FILES([
       tests/Makefile
    ])   
 fi
-
+AC_SUBST([TESTS_DIR])
 
 AC_OUTPUT
