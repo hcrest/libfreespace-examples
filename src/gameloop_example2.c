@@ -90,7 +90,7 @@ static void remove_pollfd(FreespaceFileHandleType fd) {
     }
 
     if (i != nfds) {
-        memcpy(&fds[i], &fds[i + 1], (nfds - i - 1) * sizeof(struct pollfd));
+        memmove(&fds[i], &fds[i + 1], (nfds - i - 1) * sizeof(struct pollfd));
         nfds--;
     }
 }

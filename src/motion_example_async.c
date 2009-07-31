@@ -95,7 +95,7 @@ static void remove_pollfd(FreespaceFileHandleType fd) {
     }
 
     if (i != waitHandleCount) {
-        memcpy(&waitHandles[i], &waitHandles[i + 1], (waitHandleCount - i - 1) * sizeof(HANDLE));
+        memmove(&waitHandles[i], &waitHandles[i + 1], (waitHandleCount - i - 1) * sizeof(HANDLE));
         waitHandleCount--;
     }
 
@@ -145,7 +145,7 @@ static void remove_pollfd(FreespaceFileHandleType fd) {
     }
 
     if (i != nfds) {
-        memcpy(&fds[i], &fds[i + 1], (nfds - i - 1) * sizeof(struct pollfd));
+        memmove(&fds[i], &fds[i + 1], (nfds - i - 1) * sizeof(struct pollfd));
         nfds--;
     }
 }

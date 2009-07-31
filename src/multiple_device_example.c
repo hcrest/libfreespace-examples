@@ -51,6 +51,8 @@
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
 
+#define TIMEOUT_MAX 1000
+
 struct DeviceData {
     FreespaceDeviceId id;
 
@@ -71,7 +73,51 @@ struct DeviceData {
 #define MAX_NUMBER_DEVICES 50
 struct DeviceData devices[MAX_NUMBER_DEVICES];
 
+
 #ifdef _WIN32
+static HANDLE waitHandles[MAXIMUM_WAIT_OBJECTS];
+static DWORD waitHandleCount = 0;
+
+static void init_waitset() {
+}
+
+static void add_pollfd(FreespaceFileHandleType fd, short events) {
+    DWORD i;
+
+    for (i = 0; i < waitHandleCount; i++) {
+        if (waitHandles[i] == fd) {
+            return;
+        }
+    }
+
+    if (waitHandleCount >= MAXIMUM_WAIT_OBJECTS) {
+        printf("Waiting for too many handles!!!\n");
+        return;
+    }
+
+    waitHandles[waitHandleCount] = fd;
+    waitHandleCount++;
+
+    printf("Added a handle %p. Total handles = %d\n", fd, waitHandleCount);
+}
+
+static void remove_pollfd(FreespaceFileHandleType fd) {
+    DWORD i;
+
+    for (i = 0; i < waitHandleCount; i++) {
+        if (waitHandles[i] == fd) {
+            break;
+        }
+    }
+
+    if (i != waitHandleCount) {
+        memmove(&waitHandles[i], &waitHandles[i + 1], (waitHandleCount - i - 1) * sizeof(HANDLE));
+        waitHandleCount--;
+    }
+
+    printf("Removed a handle %p. Total handles = %d\n", fd, waitHandleCount);
+}
+
 static struct _timeb lastTime;
 static struct _timeb nextTime;
 
@@ -95,7 +141,56 @@ int timer_step() {
     }
     return retVal;
 }
+
+
 #else
+static struct pollfd* fds;
+static nfds_t nfds;
+static nfds_t maxfds;
+
+static void init_waitset() {
+    nfds = 0;
+    maxfds = 5;
+    fds = (struct pollfd*) malloc(maxfds * sizeof(struct pollfd));
+}
+
+static void add_pollfd(FreespaceFileHandleType fd, short events) {
+    int i;
+
+
+    for (i = 0; i < nfds; i++) {
+        if (fds[i].fd == fd) {
+            fds[i].events = events;
+            return;
+        }
+    }
+
+    if (nfds == maxfds) {
+        maxfds += 5;
+        fds = (struct pollfd*) realloc(fds, maxfds * sizeof(struct pollfd));
+    }
+    fds[nfds].fd = fd;
+    fds[nfds].events = events;
+    fds[nfds].revents = 0;
+
+    nfds++;
+}
+
+static void remove_pollfd(FreespaceFileHandleType fd) {
+    int i;
+
+    for (i = 0; i < nfds; i++) {
+        if (fds[i].fd == fd) {
+            break;
+        }
+    }
+
+    if (i != nfds) {
+        memmove(&fds[i], &fds[i + 1], (nfds - i - 1) * sizeof(struct pollfd));
+        nfds--;
+    }
+}
+
 #include <sys/time.h>
 #include <unistd.h>
 
@@ -266,7 +361,7 @@ static void cleanupDevice(FreespaceDeviceId id) {
     }
     
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
-     printf("%d> Sending message to enable mouse motion data.\n", id);
+    printf("%d> Sending message to enable mouse motion data.\n", id);
     d.enableBodyMotion = 0;
     d.enableUserPosition = 0;
     d.inhibitPowerManager = 0;
@@ -371,18 +466,78 @@ int main(int argc, char* argv[]) {
         printf("Initialization error. rc=%d\n", rc);
         return 1;
     }
+
+    init_waitset();
+#ifdef HAS_PPOLL
+    {
+        // Signal handling when working with ppoll.
+        sigset_t blockset;
+        sigemptyset(&blockset);
+        sigaddset(&blockset, SIGINT);
+        sigaddset(&blockset, SIGHUP);
+        sigprocmask(SIG_BLOCK, &blockset, NULL);
+    }
+#endif
+
     freespace_setDeviceHotplugCallback(hotplugCallback, NULL);
-    freespace_perform();
+    freespace_setFileDescriptorCallbacks(add_pollfd, remove_pollfd);
     freespace_syncFileDescriptors();
+
+    freespace_perform();
 
     timer_initialize();
     while (!quit) {
-        freespace_perform();
+        int timeoutMs;
+
+        freespace_getNextTimeout(&timeoutMs);
+
+        // Adjust the maximum timeout to allow for Ctrl-C handling
+        if (timeoutMs < 0 || timeoutMs > TIMEOUT_MAX) {
+            timeoutMs = TIMEOUT_MAX;
+        }
 #ifdef _WIN32
-        Sleep(1);
+        {
+            DWORD bResult = WaitForMultipleObjects(waitHandleCount, waitHandles, FALSE, (unsigned int) timeoutMs);
+            if (bResult == WAIT_FAILED) {
+                printf("Error from WaitForMultipleObjects\n");
+                break;
+            }
+        }
 #else
-        usleep(1000);
+#ifndef HAS_PPOLL
+        {
+            int ready;
+            // Look into the signal handler race condition that ppoll fixes
+            // and either live with it or fix it here.
+            ready = poll(fds, nfds, timeoutMs);
+            if (ready < 0) {
+                printf("Error from poll\n");
+                break;
+            }
+        }
+#else
+        {
+            int ready;
+            struct timespec tmspec;
+            sigset_t emptyset;
+
+            sigemptyset(&emptyset);
+            if (timeoutMs >= 0) {
+                tmspec.tv_sec = timeoutMs / 1000;
+                tmspec.tv_nsec = (timeoutMs % 1000) * 1000000;
+                ready = ppoll(fds, nfds, &tmspec, &emptyset);
+            } else {
+                ready = ppoll(fds, nfds, NULL, &emptyset);
+            }
+            if (ready < 0) {
+                printf("Error from ppoll\n");
+                break;
+            }
+        }
 #endif
+#endif
+        freespace_perform();
+
         // Process and display the statistics every second.
         if (timer_step()) {
             int offset = 0;
@@ -398,22 +553,22 @@ int main(int argc, char* argv[]) {
                 if (devices[idx].id < 0) {
                     continue;
                 }
-		if (useBodyFrame) {
-		    tmp = devices[idx].msgReadCurrent;
-		    devices[idx].msgReadDelta = tmp - devices[idx].msgReadLast;
-		    devices[idx].msgReadLast = tmp;
+                if (useBodyFrame) {
+                    tmp = devices[idx].msgReadCurrent;
+                    devices[idx].msgReadDelta = tmp - devices[idx].msgReadLast;
+                    devices[idx].msgReadLast = tmp;
 
-		    tmp = devices[idx].msgSendCurrent;
-		    devices[idx].msgSendDelta = tmp - devices[idx].msgSendLast;
-		    devices[idx].msgSendLast = tmp;
+                    tmp = devices[idx].msgSendCurrent;
+                    devices[idx].msgSendDelta = tmp - devices[idx].msgSendLast;
+                    devices[idx].msgSendLast = tmp;
 
-		    printf("[%02d: %02d %03d %05d %d]   ", devices[idx].id, devices[idx].msgSendDelta,
-			   devices[idx].msgReadDelta, devices[idx].lostPackets, devices[idx].sequenceNumber);
-		} else {
-		    //print the read/send errored and count (sequenceNumber)
-		    printf("[%02d: %02d %02d %05d - %d %d]   ", devices[idx].id, devices[idx].msgReadError, 
-			   devices[idx].msgSendError, devices[idx].sequenceNumber, devices[idx].msgReadCurrent, devices[idx].msgSendCurrent);
-		}
+                    printf("[%02d: %02d %03d %05d %d]   ", devices[idx].id, devices[idx].msgSendDelta,
+                        devices[idx].msgReadDelta, devices[idx].lostPackets, devices[idx].sequenceNumber);
+                } else {
+                    //print the read/send errored and count (sequenceNumber)
+                    printf("[%02d: %02d %02d %05d - %d %d]   ", devices[idx].id, devices[idx].msgReadError, 
+                        devices[idx].msgSendError, devices[idx].sequenceNumber, devices[idx].msgReadCurrent, devices[idx].msgSendCurrent);
+                }
                 offset++;
                 if (offset >= 3) {
                     printf("\n");
@@ -421,9 +576,9 @@ int main(int argc, char* argv[]) {
                 }
 
                 // Send out our message request message(s)
-		if (sendMessageEachLoop) {
-		    sendMessage(devices[idx].id);
-		}
+                if (sendMessageEachLoop) {
+                    sendMessage(devices[idx].id);
+                }
             }
             printf("\n");
         }
