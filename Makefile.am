@@ -32,6 +32,6 @@
 
 EXTRA_DIST = autogen.sh
 
-SUBDIRS = m4 src doc $(TESTS_DIR)
+SUBDIRS = m4 src doc win $(TESTS_DIR)
 
 AUTOMAKE_OPTIONS = foreign
