@@ -58,6 +58,9 @@ AC_CONFIG_FILES([
    doc/Makefile
    m4/Makefile
    src/Makefile
+   win/Makefile
+   win/vs2005/Makefile
+   win/vs2008/Makefile
 ])
 
 if test "$with_tests" == "yes"

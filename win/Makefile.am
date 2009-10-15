@@ -30,20 +30,4 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-EXTRA_DIST = stdafx.h
-
-bin_PROGRAMS = motion_example motion_example_async discovery_example communication_example multiple_device_example gameloop_example gameloop_example2 firmware_version_example
-
-motion_example_SOURCES = motion_example.c appControlHandler.c appControlHandler.h
-motion_example_async_SOURCES = motion_example_async.c appControlHandler.c appControlHandler.h
-communication_example_SOURCES = communication_example.c appControlHandler.c appControlHandler.h
-discovery_example_SOURCES = discovery_example.c appControlHandler.c appControlHandler.h
-multiple_device_example_SOURCES = multiple_device_example.c appControlHandler.c appControlHandler.h
-gameloop_example_SOURCES = gameloop_example.c appControlHandler.c appControlHandler.h
-gameloop_example2_SOURCES = gameloop_example2.c appControlHandler.c appControlHandler.h
-firmware_version_example_SOURCES = firmware_version_example.c appControlHandler.c appControlHandler.h
-
-gameloop_example_LDADD = -lpthread
-
-LDADD = -lfreespace
-AM_CFLAGS = -Wall
+SUBDIRS = vs2005 vs2008
