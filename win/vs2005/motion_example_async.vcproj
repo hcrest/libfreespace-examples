@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)/../../libfreespace/include; $(ProjectDir)../../libfreespace/win32/include;"
+				AdditionalIncludeDirectories="$(ProjectDir)../../../libfreespace/include; $(ProjectDir)../../../libfreespace/win32/include;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -124,7 +124,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)/../../libfreespace/include; $(ProjectDir)../../libfreespace/win32/include;"
+				AdditionalIncludeDirectories="$(ProjectDir)../../../libfreespace/include; $(ProjectDir)../../../libfreespace/win32/include;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -189,11 +189,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\appControlHandler.c"
+				RelativePath="..\..\src\appControlHandler.c"
 				>
 			</File>
 			<File
-				RelativePath=".\motion_example_async.c"
+				RelativePath="..\..\src\motion_example_async.c"
 				>
 			</File>
 		</Filter>
@@ -201,11 +201,11 @@
 			Name="Header Files"
 			>
 			<File
-				RelativePath=".\appControlHandler.h"
+				RelativePath="..\..\src\appControlHandler.h"
 				>
 			</File>
 			<File
-				RelativePath=".\stdafx.h"
+				RelativePath="..\..\src\stdafx.h"
 				>
 			</File>
 		</Filter>
