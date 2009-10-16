@@ -45,8 +45,10 @@
 #include <freespace/freespace_codecs.h>
 #include "appControlHandler.h"
 
+#ifndef __APPLE__
 #if defined __GLIBC__ && __GLIBC_PREREQ(2, 4)
 #define HAS_PPOLL
+#endif
 #endif
 
 static struct pollfd* fds;
