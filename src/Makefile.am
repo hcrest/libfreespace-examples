@@ -30,20 +30,26 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+APP_CTRL_SRCS = appControlHandler.c appControlHandler.h
+MATH_SRCS = math/math.c math/math.h math/quaternion.c math/quaternion.h math/vec3.h math/vec3.c
+
 EXTRA_DIST = stdafx.h
 
-bin_PROGRAMS = motion_example motion_example_async discovery_example communication_example multiple_device_example gameloop_example gameloop_example2 firmware_version_example
+bin_PROGRAMS = motion_example motion_example_async discovery_example communication_example multiple_device_example \
+               gameloop_example gameloop_example2 game3d_example firmware_version_example
 
-motion_example_SOURCES = motion_example.c appControlHandler.c appControlHandler.h
-motion_example_async_SOURCES = motion_example_async.c appControlHandler.c appControlHandler.h
-communication_example_SOURCES = communication_example.c appControlHandler.c appControlHandler.h
-discovery_example_SOURCES = discovery_example.c appControlHandler.c appControlHandler.h
-multiple_device_example_SOURCES = multiple_device_example.c appControlHandler.c appControlHandler.h
-gameloop_example_SOURCES = gameloop_example.c appControlHandler.c appControlHandler.h
-gameloop_example2_SOURCES = gameloop_example2.c appControlHandler.c appControlHandler.h
-firmware_version_example_SOURCES = firmware_version_example.c appControlHandler.c appControlHandler.h
+motion_example_SOURCES = motion_example.c $(APP_CTRL_SRCS)
+motion_example_async_SOURCES = motion_example_async.c $(APP_CTRL_SRCS)
+communication_example_SOURCES = communication_example.c $(APP_CTRL_SRCS)
+discovery_example_SOURCES = discovery_example.c $(APP_CTRL_SRCS)
+multiple_device_example_SOURCES = multiple_device_example.c $(APP_CTRL_SRCS)
+gameloop_example_SOURCES = gameloop_example.c $(APP_CTRL_SRCS)
+gameloop_example2_SOURCES = gameloop_example2.c $(APP_CTRL_SRCS)
+game3d_example_SOURCES = game3d_example.c $(APP_CTRL_SRCS) $(MATH_SRCS)
+firmware_version_example_SOURCES = firmware_version_example.c $(APP_CTRL_SRCS)
 
 gameloop_example_LDADD = -lpthread
+game3d_example_LDADD = -lm
 
 LDADD = -lfreespace
 AM_CFLAGS = -Wall

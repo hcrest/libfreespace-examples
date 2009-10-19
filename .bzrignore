@@ -39,3 +39,6 @@ win/vs2008/release
 libfreespace-examples-*-win32.zip
 .project
 .pydevproject
+.cproject
+Debug
+src/game3d_example
