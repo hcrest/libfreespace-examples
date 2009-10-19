@@ -35,3 +35,6 @@ config
 firmware_version_example
 .project
 .pydevproject
+.cproject
+Debug
+src/game3d_example
