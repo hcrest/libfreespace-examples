@@ -50,7 +50,7 @@ void q_conjugate(Quaternion* out, Quaternion q) {
 }
 
 float q_length(Quaternion q) {
-    return fsqrtf(q_lengthSq(q));
+    return sqrtf(q_lengthSq(q));
 }
 
 float q_lengthSq(Quaternion q) {
@@ -77,8 +77,8 @@ void q_toEulerAngles(Vec3f* out, Quaternion q) {
     float m23 = (2 * q.y * q.z) + (2 * q.w * q.x);
     float m33 = (2 * q.w * q.w) + (2 * q.z * q.z) - 1;
 
-    out->x = fatan2f(m23, m33);
+    out->x = atan2f(m23, m33);
     out->y = asin(-m13);
-    out->z = fatan2f(m12, m11);
+    out->z = atan2f(m12, m11);
 }
 

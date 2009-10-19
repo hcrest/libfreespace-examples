@@ -51,17 +51,6 @@ extern "C" {
 #define DEGREES_TO_RADIANS(deg) ((floag)deg * PI / 180.0f)
 
 ////////////////////////////////////////////////////////////////
-// Float math
-#define fabsf(a)      ((float) fabs((double) a))
-#define fsqrtf(a)     ((float) sqrt((double) a))
-#define fsinf(a)      ((float) sin((double) a))
-#define fcosf(a)      ((float) cos((double) a))
-#define ftanf(a)      ((float) tan((double) a))
-#define facosf(a)     ((float) acos((double) a))
-#define fasinf(x,y)   ((float) asin((double) x, (double) y))
-#define fatan2f(x, y) ((float) atan2((double) x, (double) y))
-#define fmodf(x,y)    ((float) fmod((double) x, (double) y))
-////////////////////////////////////////////////////////////////
 
 #ifdef __cplusplus
 }
