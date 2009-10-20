@@ -33,52 +33,54 @@
  */
 
 #include "math/quaternion.h"
-#include "math/math.h"
+#include <math.h>
 
-void q_quatFromUserFrame(Quaternion* quat, struct freespace_UserFrame userFrame) {
-    quat->w = userFrame.angularPosA;
-    quat->x = userFrame.angularPosB;
-    quat->y = userFrame.angularPosC;
-    quat->z = userFrame.angularPosD;
+void q_quatFromUserFrame(struct Quaternion* quat,
+                         const struct freespace_UserFrame* userFrame) {
+    quat->w = userFrame->angularPosA;
+    quat->x = userFrame->angularPosB;
+    quat->y = userFrame->angularPosC;
+    quat->z = userFrame->angularPosD;
 }
 
-void q_conjugate(Quaternion* out, Quaternion q) {
-    out->w = q.w;
-    out->x = -q.x;
-    out->y = -q.y;
-    out->z = -q.z;
+void q_conjugate(struct Quaternion* out,
+                 const struct Quaternion* q) {
+    out->w = q->w;
+    out->x = -q->x;
+    out->y = -q->y;
+    out->z = -q->z;
 }
 
-float q_length(Quaternion q) {
-    return fsqrtf(q_lengthSq(q));
+float q_length(const struct Quaternion* q) {
+    return sqrtf(q_lengthSq(q));
 }
 
-float q_lengthSq(Quaternion q) {
-    return ((q.w*q.w) + (q.x*q.x) + (q.y*q.y) + (q.z*q.z));
+float q_lengthSq(const struct Quaternion* q) {
+    return ((q->w * q->w) + (q->x * q->x) + (q->y * q->y) + (q->z * q->z));
 }
 
-void q_scale(Quaternion* out, Quaternion q, float scale) {
-    out->w = q.w * scale;
-    out->x = q.x * scale;
-    out->y = q.y * scale;
-    out->z = q.z * scale;
+void q_scale(struct Quaternion* out,
+             const struct Quaternion* q,
+             float scale) {
+    out->w = q->w * scale;
+    out->x = q->x * scale;
+    out->y = q->y * scale;
+    out->z = q->z * scale;
 }
 
-void q_normalize(Quaternion* out, Quaternion q) {
+void q_normalize(struct Quaternion* out, const struct Quaternion* q) {
     float len = q_length(q);
     q_scale(out, q, 1.0f / len);
 }
 
-void q_toEulerAngles(Vec3f* out, Quaternion q) {
+void q_toEulerAngles(struct Vec3f* out, const struct Quaternion* q) {
+    float m11 = (2.0f * q->w * q->w) + (2.0f * q->x * q->x) - 1.0f;
+    float m12 = (2.0f * q->x * q->y) + (2.0f * q->w * q->z);
+    float m13 = (2.0f * q->x * q->z) - (2.0f * q->w * q->y);
+    float m23 = (2.0f * q->y * q->z) + (2.0f * q->w * q->x);
+    float m33 = (2.0f * q->w * q->w) + (2.0f * q->z * q->z) - 1.0f;
 
-    float m11 = (2 * q.w * q.w) + (2 * q.x * q.x) - 1;
-    float m12 = (2 * q.x * q.y) + (2 * q.w * q.z);
-    float m13 = (2 * q.x * q.z) - (2 * q.w * q.y);
-    float m23 = (2 * q.y * q.z) + (2 * q.w * q.x);
-    float m33 = (2 * q.w * q.w) + (2 * q.z * q.z) - 1;
-
-    out->x = fatan2f(m23, m33);
-    out->y = asin(-m13);
-    out->z = fatan2f(m12, m11);
+    out->x = atan2f(m23, m33);
+    out->y = asinf(-m13);
+    out->z = atan2f(m12, m11);
 }
-

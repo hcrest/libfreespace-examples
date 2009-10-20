@@ -36,9 +36,9 @@
 #include <freespace/freespace_codecs.h>
 #include "appControlHandler.h"
 
+#include <math.h>
 #include "math/quaternion.h"
 #include "math/vec3.h"
-#include "math/math.h"
 
 #include <stdlib.h>
 #include <signal.h>
@@ -46,6 +46,9 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+
+#define RADIANS_TO_DEGREES(rad) ((float) rad * (float) (180.0 / M_PI))
+#define DEGREES_TO_RADIANS(deg) ((floag) deg * (float) (M_PI / 180.0))
 
 struct InputLoopState {
     pthread_t thread_;
@@ -89,19 +92,21 @@ static void getUserFrameFromInputThread(struct InputLoopState* state,
     pthread_mutex_unlock(&state->lock_);
 }
 
-static void getEulerAnglesFromUserFrame(struct freespace_UserFrame user, Vec3f* eulerAngles) {
-    Quaternion q;
+static void getEulerAnglesFromUserFrame(const struct freespace_UserFrame* user,
+                                        struct Vec3f* eulerAngles) {
+    struct Quaternion q;
     q_quatFromUserFrame(&q, user);
 
-    // The Freespace quaternion gives the rotation in terms of rotating the world around the object
-    // We take the conjugate to get the rotation in the object's reference frame.
-    q_conjugate(&q, q);
+    // The Freespace quaternion gives the rotation in terms of
+    // rotating the world around the object We take the conjugate to
+    // get the rotation in the object's reference frame.
+    q_conjugate(&q, &q);
 
     // Normalize to get a unit quaternion
-    q_normalize(&q, q);
+    q_normalize(&q, &q);
 
     // Convert quaternion to Euler angles
-    q_toEulerAngles(eulerAngles, q);
+    q_toEulerAngles(eulerAngles, &q);
 }
 
 static void* inputThreadFunction(void* arg) {
@@ -231,7 +236,7 @@ static void* inputThreadFunction(void* arg) {
 int main(int argc, char* argv[]) {
     struct InputLoopState inputLoop;
     struct freespace_UserFrame user;
-    Vec3f eulerAngles;
+    struct Vec3f eulerAngles;
 
     printVersionInfo(argv[0]);
 
@@ -245,10 +250,14 @@ int main(int argc, char* argv[]) {
         getUserFrameFromInputThread(&inputLoop, &user);
 
         // Run game logic.
-        getEulerAnglesFromUserFrame(user, &eulerAngles);
+        getEulerAnglesFromUserFrame(&user, &eulerAngles);
 
         // Render.
-        printf("\r%d: Current Rotation = roll: %4f, pitch: %4f, yaw: %4f         ", user.sequenceNumber, RADIANS_TO_DEGREES(eulerAngles.x), RADIANS_TO_DEGREES(eulerAngles.y), RADIANS_TO_DEGREES(eulerAngles.z));
+        printf("\r%d: roll: %0.4f, pitch: %0.4f, yaw: %0.4f         ",
+               user.sequenceNumber,
+               RADIANS_TO_DEGREES(eulerAngles.x),
+               RADIANS_TO_DEGREES(eulerAngles.y),
+               RADIANS_TO_DEGREES(eulerAngles.z));
         fflush(stdout);
 
         // Wait for "vsync"

@@ -44,48 +44,55 @@
 extern "C" {
 #endif
 
-typedef struct {
+struct Quaternion {
     float x;
     float y;
     float z;
     float w;
-} Quaternion;
+};
 
 /**
  * Create a quaternion from a freespace UserFrame message
  */
-void q_quatFromUserFrame(Quaternion* out, struct freespace_UserFrame user);
+void q_quatFromUserFrame(struct Quaternion* out,
+                         const struct freespace_UserFrame* user);
 
 /**
  * Put the conjugate of q in out
  */
-void q_conjugate(Quaternion* out, Quaternion q);
+void q_conjugate(struct Quaternion* out,
+                 const struct Quaternion* q);
 
 /**
  * return the length of q
  */
-float q_length(Quaternion q);
+float q_length(const struct Quaternion* q);
 
 /**
  * Return the length squared of q
  */
-float q_lengthSq(Quaternion q);
+float q_lengthSq(const struct Quaternion* q);
 
 /**
  * Scale q by scale and put the result in out
  */
-void q_scale(Quaternion* out, Quaternion q, float scale);
+void q_scale(struct Quaternion* out,
+             const struct Quaternion* q,
+             float scale);
 
 /**
  * Normalize q and put the resulting quaternion in out
  */
-void q_normalize(Quaternion* out, Quaternion q);
+void q_normalize(struct Quaternion* out,
+                 const struct Quaternion* q);
 
 /**
- * Do an euler decomposition of quaternion q for an aerospace sequence rotation (yaw => pitch => roll).
- * In the resulting vector, x is roll, y is pitch, z is yaw.
+ * Do an euler decomposition of quaternion q for an aerospace sequence
+ * rotation (yaw => pitch => roll).  In the resulting vector, x is
+ * roll, y is pitch, z is yaw.
  */
-void q_toEulerAngles(Vec3f* out, Quaternion q);
+void q_toEulerAngles(struct Vec3f* out,
+                     const struct Quaternion* q);
 
 
 #ifdef __cplusplus
@@ -93,4 +100,3 @@ void q_toEulerAngles(Vec3f* out, Quaternion q);
 #endif
 
 #endif /* FREESPACE_QUATERNION_H_ */
-
