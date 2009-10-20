@@ -101,11 +101,11 @@ int main(int argc, char* argv[]) {
         }
 
         // Read the battery level response message (hopefully).
-        rc = freespace_read(device, readBuffer, sizeof(readBuffer), 600, &length);
+        rc = freespace_read(device, readBuffer, sizeof(readBuffer), 1000, &length);
         if (rc == FREESPACE_SUCCESS) {
             freespace_printMessage(stdout, readBuffer, length);
         } else if (rc == FREESPACE_ERROR_TIMEOUT) {
-            printf("<timeout>\n");
+            printf("<timeout>  Try moving the Loop/FRCM to wake it up.\n");
         } else if (rc == FREESPACE_ERROR_INTERRUPTED) {
             printf("<interrupted>\n");
         } else {
