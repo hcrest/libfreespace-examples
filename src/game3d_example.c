@@ -98,12 +98,9 @@ static void getEulerAnglesFromUserFrame(const struct freespace_UserFrame* user,
     q_quatFromUserFrame(&q, user);
 
     // The Freespace quaternion gives the rotation in terms of
-    // rotating the world around the object We take the conjugate to
+    // rotating the world around the object. We take the conjugate to
     // get the rotation in the object's reference frame.
     q_conjugate(&q, &q);
-
-    // Normalize to get a unit quaternion
-    q_normalize(&q, &q);
 
     // Convert quaternion to Euler angles
     q_toEulerAngles(eulerAngles, &q);

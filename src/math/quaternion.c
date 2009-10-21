@@ -41,6 +41,8 @@ void q_quatFromUserFrame(struct Quaternion* quat,
     quat->x = userFrame->angularPosB;
     quat->y = userFrame->angularPosC;
     quat->z = userFrame->angularPosD;
+
+    q_normalize(quat, quat);
 }
 
 void q_conjugate(struct Quaternion* out,

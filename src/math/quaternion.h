@@ -52,7 +52,16 @@ struct Quaternion {
 };
 
 /**
- * Create a quaternion from a freespace UserFrame message
+ * Convert Freespace UserFrame message to a normalized quaternion.
+ *
+ * Note: The returned quaternion gives the rotation in terms of
+ * rotating the world around the object. It is usually desirable to
+ * take the conjugate to rotate the object in a fixed reference frame.
+ *
+ * See game3d_example for usage.
+ *
+ * @param out the normalized quaternion is returned here
+ * @param user a decoded user frame message
  */
 void q_quatFromUserFrame(struct Quaternion* out,
                          const struct freespace_UserFrame* user);
