@@ -89,7 +89,7 @@ static void* inputThreadFunction(void* arg) {
     struct InputLoopState* state = (struct InputLoopState*) arg;
     struct freespace_DataMotionControl d;
     FreespaceDeviceId device;
-    char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     int numIds;
     int rc;
 
@@ -124,7 +124,7 @@ static void* inputThreadFunction(void* arg) {
     d.inhibitPowerManager = 1;
     d.enableMouseMovement = 0;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
@@ -152,7 +152,7 @@ static void* inputThreadFunction(void* arg) {
         }
 
         // Check if this is a body frame message.
-        if (freespace_decodeBodyFrame((int8_t*) buffer, length, &body) == FREESPACE_SUCCESS) {
+        if (freespace_decodeBodyFrame(buffer, length, &body) == FREESPACE_SUCCESS) {
             pthread_mutex_lock(&state->lock_);
 
             // Update state fields.
@@ -188,7 +188,7 @@ static void* inputThreadFunction(void* arg) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 1;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
