@@ -36,9 +36,9 @@
 #include <freespace/freespace_codecs.h>
 #include "appControlHandler.h"
 
+#include <math.h>
 #include "math/quaternion.h"
 #include "math/vec3.h"
-#include "math/math.h"
 
 #include <stdlib.h>
 #include <signal.h>
@@ -46,6 +46,9 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+
+#define RADIANS_TO_DEGREES(rad) ((float) rad * (float) (180.0 / M_PI))
+#define DEGREES_TO_RADIANS(deg) ((floag) deg * (float) (M_PI / 180.0))
 
 struct InputLoopState {
     pthread_t thread_;
@@ -89,26 +92,25 @@ static void getUserFrameFromInputThread(struct InputLoopState* state,
     pthread_mutex_unlock(&state->lock_);
 }
 
-static void getEulerAnglesFromUserFrame(struct freespace_UserFrame user, Vec3f* eulerAngles) {
-    Quaternion q;
+static void getEulerAnglesFromUserFrame(const struct freespace_UserFrame* user,
+                                        struct Vec3f* eulerAngles) {
+    struct Quaternion q;
     q_quatFromUserFrame(&q, user);
 
-    // The Freespace quaternion gives the rotation in terms of rotating the world around the object
-    // We take the conjugate to get the rotation in the object's reference frame.
-    q_conjugate(&q, q);
-
-    // Normalize to get a unit quaternion
-    q_normalize(&q, q);
+    // The Freespace quaternion gives the rotation in terms of
+    // rotating the world around the object. We take the conjugate to
+    // get the rotation in the object's reference frame.
+    q_conjugate(&q, &q);
 
     // Convert quaternion to Euler angles
-    q_toEulerAngles(eulerAngles, q);
+    q_toEulerAngles(eulerAngles, &q);
 }
 
 static void* inputThreadFunction(void* arg) {
     struct InputLoopState* state = (struct InputLoopState*) arg;
     struct freespace_DataMotionControl d;
     FreespaceDeviceId device;
-    char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     int numIds;
     int rc;
 
@@ -143,7 +145,7 @@ static void* inputThreadFunction(void* arg) {
     d.inhibitPowerManager = 1;
     d.enableMouseMovement = 0;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
@@ -171,7 +173,7 @@ static void* inputThreadFunction(void* arg) {
         }
 
         // Check if this is a body frame message.
-        if (freespace_decodeUserFrame((int8_t*) buffer, length, &user) == FREESPACE_SUCCESS) {
+        if (freespace_decodeUserFrame(buffer, length, &user) == FREESPACE_SUCCESS) {
             pthread_mutex_lock(&state->lock_);
 
             // Update state fields.
@@ -208,7 +210,7 @@ static void* inputThreadFunction(void* arg) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 1;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
@@ -231,7 +233,7 @@ static void* inputThreadFunction(void* arg) {
 int main(int argc, char* argv[]) {
     struct InputLoopState inputLoop;
     struct freespace_UserFrame user;
-    Vec3f eulerAngles;
+    struct Vec3f eulerAngles;
 
     printVersionInfo(argv[0]);
 
@@ -245,10 +247,14 @@ int main(int argc, char* argv[]) {
         getUserFrameFromInputThread(&inputLoop, &user);
 
         // Run game logic.
-        getEulerAnglesFromUserFrame(user, &eulerAngles);
+        getEulerAnglesFromUserFrame(&user, &eulerAngles);
 
         // Render.
-        printf("\r%d: Current Rotation = roll: %4f, pitch: %4f, yaw: %4f         ", user.sequenceNumber, RADIANS_TO_DEGREES(eulerAngles.x), RADIANS_TO_DEGREES(eulerAngles.y), RADIANS_TO_DEGREES(eulerAngles.z));
+        printf("\r%d: roll: %0.4f, pitch: %0.4f, yaw: %0.4f         ",
+               user.sequenceNumber,
+               RADIANS_TO_DEGREES(eulerAngles.x),
+               RADIANS_TO_DEGREES(eulerAngles.y),
+               RADIANS_TO_DEGREES(eulerAngles.z));
         fflush(stdout);
 
         // Wait for "vsync"

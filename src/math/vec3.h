@@ -42,21 +42,14 @@
 extern "C" {
 #endif
 
-
-typedef struct {
+struct Vec3f {
     float x;
     float y;
     float z;
-} Vec3f;
-
-
+};
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* FREESPACE_VEC3_H_ */
-
-
-
-

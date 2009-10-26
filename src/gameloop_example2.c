@@ -32,9 +32,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _GNU_SOURCE // for ppoll
-#include <poll.h>
-
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -45,72 +42,20 @@
 #include <freespace/freespace_codecs.h>
 #include "appControlHandler.h"
 
-#ifndef __APPLE__
-#if defined __GLIBC__ && __GLIBC_PREREQ(2, 4)
-#define HAS_PPOLL
-#endif
-#endif
-
-static struct pollfd* fds;
-static nfds_t nfds;
-static nfds_t maxfds;
-
-static void init_waitset() {
-    nfds = 0;
-    maxfds = 5;
-    fds = (struct pollfd*) malloc(maxfds * sizeof(struct pollfd));
-}
-
-static void add_pollfd(FreespaceFileHandleType fd, short events) {
-    int i;
-
-    for (i = 0; i < nfds; i++) {
-        if (fds[i].fd == fd) {
-            fds[i].events = events;
-            return;
-        }
-    }
-
-    if (nfds == maxfds) {
-        maxfds += 5;
-        fds = (struct pollfd*) realloc(fds, maxfds * sizeof(struct pollfd));
-    }
-    fds[nfds].fd = fd;
-    fds[nfds].events = events;
-    fds[nfds].revents = 0;
-
-    nfds++;
-}
-
-static void remove_pollfd(FreespaceFileHandleType fd) {
-    int i;
-
-    for (i = 0; i < nfds; i++) {
-        if (fds[i].fd == fd) {
-            break;
-        }
-    }
-
-    if (i != nfds) {
-        memmove(&fds[i], &fds[i + 1], (nfds - i - 1) * sizeof(struct pollfd));
-        nfds--;
-    }
-}
-
 struct freespace_BodyFrame cachedBodyFrame;
 
 static void receiveCallback(FreespaceDeviceId id,
-                            const char* buffer,
+                            const uint8_t* buffer,
                             int length,
                             void* cookie,
                             int result) {
     if (result == FREESPACE_SUCCESS) {
-        freespace_decodeBodyFrame((int8_t*) buffer, length, &cachedBodyFrame);
+        freespace_decodeBodyFrame(buffer, length, &cachedBodyFrame);
     }
 }
 
 static FreespaceDeviceId initializeFreespace() {
-    char buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
     struct freespace_DataMotionControl d;
     FreespaceDeviceId device;
     int numIds;
@@ -122,10 +67,6 @@ static FreespaceDeviceId initializeFreespace() {
         printf("Initialization error. rc=%d\n", rc);
 	return 1;
     }
-
-    init_waitset();
-    freespace_setFileDescriptorCallbacks(add_pollfd, remove_pollfd);
-    freespace_syncFileDescriptors();
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
     rc = freespace_getDeviceList(&device, 1, &numIds);
@@ -154,7 +95,7 @@ static FreespaceDeviceId initializeFreespace() {
     d.inhibitPowerManager = 1;
     d.enableMouseMovement = 0;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
@@ -169,7 +110,7 @@ static FreespaceDeviceId initializeFreespace() {
 }
 
 static void finalizeFreespace(FreespaceDeviceId device) {
-    char buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
     struct freespace_DataMotionControl d;
     int rc;
 
@@ -180,7 +121,7 @@ static void finalizeFreespace(FreespaceDeviceId device) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 1;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
@@ -196,48 +137,6 @@ static void finalizeFreespace(FreespaceDeviceId device) {
     freespace_exit();
 }
 
-
-static int getBodyFrameFromInputThread(FreespaceDeviceId device, struct freespace_BodyFrame* body) {
-    struct timespec tmspec;
-    sigset_t emptyset;
-    int count = 0;
-
-    sigemptyset(&emptyset);
-    tmspec.tv_sec = 0;
-    tmspec.tv_nsec = 0;
-    while (1) {
-        int ready;
-
-#ifndef HAS_PPOLL
-        {
-            // Look into the signal handler race condition that ppoll fixes
-            // and either live with it or fix it here.
-            ready = poll(fds, nfds, -1);
-            if (ready < 0) {
-                printf("Error from poll\n");
-                break;
-            }
-        }
-#else
-        ready = ppoll(fds, nfds, &tmspec, &emptyset);
-        if (ready < 0) {
-            printf("Error from ppoll\n");
-            break;
-        } else if (ready == 0) {
-            // timeout.
-            break;
-        }
-#endif
-
-        freespace_perform();
-        count++;
-    }
-
-    *body = cachedBodyFrame;
-    return count;
-}
-
-
 int main(int argc, char* argv[]) {
     struct freespace_BodyFrame body;
     FreespaceDeviceId device;
@@ -252,12 +151,18 @@ int main(int argc, char* argv[]) {
     // Run the game loop
     while (!quit) {
         // Get input.
-        getBodyFrameFromInputThread(device, &body);
+        freespace_perform();
+
+        body = cachedBodyFrame;
 
         // Run game logic.
 
         // Render.
-        printf("\r%d: Current accel = %d, %d, %d          ", body.sequenceNumber, body.linearAccelX, body.linearAccelY, body.linearAccelZ);
+        printf("\r%d: Current accel = %d, %d, %d          ",
+               body.sequenceNumber,
+               body.linearAccelX,
+               body.linearAccelY,
+               body.linearAccelZ);
         fflush(stdout);
 
         // Wait for "vsync"

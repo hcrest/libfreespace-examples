@@ -152,7 +152,7 @@ static void remove_pollfd(FreespaceFileHandleType fd) {
 #endif
 
 static void receiveCallback(FreespaceDeviceId id,
-                            const char* buffer,
+                            const uint8_t* buffer,
                             int length,
                             void* cookie,
                             int result) {
@@ -168,7 +168,7 @@ static void receiveCallback(FreespaceDeviceId id,
 }
 
 static void initDevice(FreespaceDeviceId id) {
-    char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     struct freespace_DataMotionControl d;
     int rc;
 
@@ -200,7 +200,7 @@ static void initDevice(FreespaceDeviceId id) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 0;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_sendAsync(id, buffer, rc, 1000, NULL, NULL);
         if (rc != FREESPACE_SUCCESS) {
@@ -213,7 +213,7 @@ static void initDevice(FreespaceDeviceId id) {
 }
 
 static void cleanupDevice(FreespaceDeviceId id) {
-    char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     struct freespace_DataMotionControl d;
     int rc;
 
@@ -224,7 +224,7 @@ static void cleanupDevice(FreespaceDeviceId id) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 1;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(id, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {

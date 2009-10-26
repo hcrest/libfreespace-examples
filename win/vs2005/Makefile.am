@@ -30,8 +30,6 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-EXTRA_DIST = autogen.sh
+EXTRA_DIST = communication_example.vcproj discovery_example.vcproj motion_example.vcproj \
+             motion_example_async.vcproj multiple_device_example.vcproj examples.sln 
 
-SUBDIRS = m4 src doc win $(TESTS_DIR)
-
-AUTOMAKE_OPTIONS = foreign

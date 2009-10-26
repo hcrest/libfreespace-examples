@@ -33,6 +33,10 @@ src/release
 src/*.vcproj.*.user
 config
 firmware_version_example
+*example*.vcproj.*.user
+win/vs2005/release
+win/vs2008/release
+libfreespace-examples-*-win32.zip
 .project
 .pydevproject
 .cproject

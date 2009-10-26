@@ -46,8 +46,8 @@
 
 int main(int argc, char* argv[]) {
     FreespaceDeviceId device;
-    char sendBuffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
-    char readBuffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t sendBuffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
+    uint8_t readBuffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     int numIds;
     int rc;
 
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
         int length;
 
         // Send a battery level request message.
-        rc = freespace_encodeBatteryLevelRequest((int8_t*) sendBuffer, sizeof(sendBuffer));
+        rc = freespace_encodeBatteryLevelRequest(sendBuffer, sizeof(sendBuffer));
         if (rc > 0) {
             rc = freespace_send(device, sendBuffer, rc);
             if (rc != FREESPACE_SUCCESS) {
@@ -101,11 +101,11 @@ int main(int argc, char* argv[]) {
         }
 
         // Read the battery level response message (hopefully).
-        rc = freespace_read(device, readBuffer, sizeof(readBuffer), 600, &length);
+        rc = freespace_read(device, readBuffer, sizeof(readBuffer), 1000, &length);
         if (rc == FREESPACE_SUCCESS) {
             freespace_printMessage(stdout, readBuffer, length);
         } else if (rc == FREESPACE_ERROR_TIMEOUT) {
-            printf("<timeout>\n");
+            printf("<timeout>  Try moving the Loop/FRCM to wake it up.\n");
         } else if (rc == FREESPACE_ERROR_INTERRUPTED) {
             printf("<interrupted>\n");
         } else {
