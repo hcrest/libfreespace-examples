@@ -217,12 +217,12 @@ int timer_step() {
 static int useBodyFrame = 1;
 static int sendMessageEachLoop = 0;
 
-static int isSDAReport(const char* buffer, int len) {
+static int isSDAReport(const uint8_t* buffer, int len) {
     return len > 2 && buffer[0] == 0x08 && buffer[1] == 0x01;
 }
 
 static void receiveCallback(FreespaceDeviceId id,
-                            const char* buffer,
+                            const uint8_t* buffer,
                             int length,
                             void* cookie,
                             int result) {
@@ -236,7 +236,7 @@ static void receiveCallback(FreespaceDeviceId id,
             if (result != FREESPACE_SUCCESS) {
                 devices[idx].msgReadError++;
             }
-	    freespace_decode_message((const int8_t*) buffer, length, &s);
+	    freespace_decode_message(buffer, length, &s);
 	    if (useBodyFrame && s.messageType == FREESPACE_MESSAGE_BODYFRAME) {	          
 	        if (devices[idx].sequenceNumber + 1 != s.bodyFrame.sequenceNumber && devices[idx].sequenceNumber != 0) {
 		    devices[idx].lostPackets = s.bodyFrame.sequenceNumber - devices[idx].sequenceNumber;
@@ -274,7 +274,7 @@ static void sendCallback(FreespaceDeviceId id,
 }
 
 static void initDevice(FreespaceDeviceId id) {
-    char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     struct freespace_DataMotionControl d;
     int rc;
     int idx;
@@ -326,7 +326,7 @@ static void initDevice(FreespaceDeviceId id) {
 	d.inhibitPowerManager = 1;
 	d.enableMouseMovement = 0;
 	d.disableFreespace = 0;
-	rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+	rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     } else {
         // You have to know what you're doing to make sense of this
         buffer[0] = 34;
@@ -347,7 +347,7 @@ static void initDevice(FreespaceDeviceId id) {
 }
 
 static void cleanupDevice(FreespaceDeviceId id) {
-    char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     struct freespace_DataMotionControl d;
     int rc;
     int idx;
@@ -367,7 +367,7 @@ static void cleanupDevice(FreespaceDeviceId id) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 1;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(id, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
@@ -393,13 +393,13 @@ static void cleanupDevice(FreespaceDeviceId id) {
 
 static void sendMessage(FreespaceDeviceId id) {
     int rc;
-    char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
 
-    rc = freespace_encodeProductIDRequest((int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeProductIDRequest(buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
     }
-    rc = freespace_encodeBatteryLevelRequest((int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeBatteryLevelRequest(buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
     }
@@ -448,10 +448,10 @@ int main(int argc, char* argv[]) {
 
     for (idx = 1; idx < argc; ++idx) {
         if (strcmp(argv[idx], "--use-multifsm-board") == 0) {
-	    useBodyFrame = 0;
-	} else if (strcmp(argv[idx], "--send-message-each-loop") == 0) {
-	    sendMessageEachLoop = 1;
-	}
+            useBodyFrame = 0;
+        } else if (strcmp(argv[idx], "--send-message-each-loop") == 0) {
+            sendMessageEachLoop = 1;
+        }
     }
 
     addControlHandler();

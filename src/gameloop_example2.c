@@ -45,17 +45,17 @@
 struct freespace_BodyFrame cachedBodyFrame;
 
 static void receiveCallback(FreespaceDeviceId id,
-                            const char* buffer,
+                            const uint8_t* buffer,
                             int length,
                             void* cookie,
                             int result) {
     if (result == FREESPACE_SUCCESS) {
-        freespace_decodeBodyFrame((int8_t*) buffer, length, &cachedBodyFrame);
+        freespace_decodeBodyFrame(buffer, length, &cachedBodyFrame);
     }
 }
 
 static FreespaceDeviceId initializeFreespace() {
-    char buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
     struct freespace_DataMotionControl d;
     FreespaceDeviceId device;
     int numIds;
@@ -95,7 +95,7 @@ static FreespaceDeviceId initializeFreespace() {
     d.inhibitPowerManager = 1;
     d.enableMouseMovement = 0;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
@@ -110,7 +110,7 @@ static FreespaceDeviceId initializeFreespace() {
 }
 
 static void finalizeFreespace(FreespaceDeviceId device) {
-    char buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
     struct freespace_DataMotionControl d;
     int rc;
 
@@ -121,7 +121,7 @@ static void finalizeFreespace(FreespaceDeviceId device) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 1;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {

@@ -50,7 +50,7 @@
 #define BUFFER_LENGTH 1024
 
 static void receiveCallback(FreespaceDeviceId id,
-                            const char* buffer,
+                            const uint8_t* buffer,
                             int length,
                             void* cookie,
                             int result) {
@@ -59,7 +59,7 @@ static void receiveCallback(FreespaceDeviceId id,
 
     if (result == FREESPACE_SUCCESS) {
         struct freespace_message s;
-        rc = freespace_decode_message((int8_t*)buffer, length, &s);
+        rc = freespace_decode_message(buffer, length, &s);
 
         if (rc != FREESPACE_SUCCESS) {
             printf ("Error reading message: %d\n", rc);
@@ -79,7 +79,7 @@ static void receiveCallback(FreespaceDeviceId id,
 
             struct freespace_ProductIDResponse productResponse = s.productIDResponse;
 
-            // Print out informationå including software version
+            // Print out information including software version
             printf("Device ID: %d\n   Device = %s\n   Software Version = %d.%d\n",
                       id, info.name, productResponse.swVersionMajor, productResponse.swVersionMinor);
         }
@@ -103,7 +103,7 @@ void hotplugCallback(enum freespace_hotplugEvent event,
                      FreespaceDeviceId id,
                      void* cookie) {
     int rc;
-    char message[BUFFER_LENGTH];
+    uint8_t message[BUFFER_LENGTH];
 
     if (event == FREESPACE_HOTPLUG_INSERTION) {
         rc = freespace_openDevice(id);
@@ -114,7 +114,7 @@ void hotplugCallback(enum freespace_hotplugEvent event,
 
         freespace_setReceiveCallback(id, receiveCallback, NULL);
 
-        rc = freespace_encodeProductIDRequest((int8_t*)message, BUFFER_LENGTH);
+        rc = freespace_encodeProductIDRequest(message, BUFFER_LENGTH);
         rc = freespace_send(id, message, rc);
         if (rc != FREESPACE_SUCCESS) {
             printf("Error sending productID request\n");

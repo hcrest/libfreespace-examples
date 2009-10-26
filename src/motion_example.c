@@ -49,7 +49,7 @@
 int main(int argc, char* argv[]) {
     struct freespace_DataMotionControl d;
     FreespaceDeviceId device;
-    char buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     int numIds;
     int rc;
 
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 0;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
     d.inhibitPowerManager = 0;
     d.enableMouseMovement = 1;
     d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
+    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
     if (rc > 0) {
         rc = freespace_send(device, buffer, rc);
         if (rc != FREESPACE_SUCCESS) {
