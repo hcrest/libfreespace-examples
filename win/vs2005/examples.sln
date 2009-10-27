@@ -27,6 +27,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "multiple_device_example", "
 		{B22E9DFB-D4CF-4850-BD2F-9FF56AD78A57} = {B22E9DFB-D4CF-4850-BD2F-9FF56AD78A57}
 	EndProjectSection
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup.vdproj", "{B544A0AC-354F-4F24-8F61-BBE5023DE290}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -57,6 +59,10 @@ Global
 		{1E933213-9B09-4DE0-B212-BE57CF947BB9}.Debug|Win32.Build.0 = Debug|Win32
 		{1E933213-9B09-4DE0-B212-BE57CF947BB9}.Release|Win32.ActiveCfg = Release|Win32
 		{1E933213-9B09-4DE0-B212-BE57CF947BB9}.Release|Win32.Build.0 = Release|Win32
+		{B544A0AC-354F-4F24-8F61-BBE5023DE290}.Debug|Win32.ActiveCfg = Debug
+		{B544A0AC-354F-4F24-8F61-BBE5023DE290}.Debug|Win32.Build.0 = Debug
+		{B544A0AC-354F-4F24-8F61-BBE5023DE290}.Release|Win32.ActiveCfg = Release
+		{B544A0AC-354F-4F24-8F61-BBE5023DE290}.Release|Win32.Build.0 = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
