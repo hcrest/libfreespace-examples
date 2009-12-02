@@ -42,3 +42,4 @@ libfreespace-examples-*-win32.zip
 .cproject
 Debug
 src/game3d_example
+*.msi
