@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     req = &message.dataModeRequest;
     req->enableBodyMotion = 1;
     req->inhibitPowerManager = 1;
-    rc = freespace_sendMessageStruct(device, &message);
+    rc = freespace_sendMessageStruct(device, FREESPACE_DEFAULT_ADDRESS_HANDHELD, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     req->enableMouseMovement = 1;
-    rc = freespace_sendMessageStruct(device, &message);
+    rc = freespace_sendMessageStruct(device, FREESPACE_DEFAULT_ADDRESS_HANDHELD, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
