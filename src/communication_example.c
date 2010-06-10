@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,11 +43,13 @@
 #include <freespace/freespace_codecs.h>
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
+#include <string.h>
 
 int main(int argc, char* argv[]) {
     FreespaceDeviceId device;
-    uint8_t sendBuffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
-    uint8_t readBuffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    struct freespace_message send;
+    struct freespace_BatteryLevelRequest * batt;
+    struct freespace_message receive;
     int numIds;
     int rc;
 
@@ -86,24 +88,21 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Requesting battery level messages.\n");
+    send.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST;
+    batt = &(send.batteryLevelRequest);
     while (!quit) {
         int length;
 
         // Send a battery level request message.
-        rc = freespace_encodeBatteryLevelRequest(sendBuffer, sizeof(sendBuffer));
-        if (rc > 0) {
-            rc = freespace_send(device, sendBuffer, rc);
-            if (rc != FREESPACE_SUCCESS) {
-                printf("Could not send message: %d.\n", rc);
-            }
-        } else {
-            printf("Could not encode message.\n");
+        rc = freespace_sendMessageStruct(device, &send);
+        if (rc != FREESPACE_SUCCESS) {
+            printf("Could not send message: %d.\n", rc);
         }
 
         // Read the battery level response message (hopefully).
-        rc = freespace_read(device, readBuffer, sizeof(readBuffer), 1000, &length);
+        rc = freespace_readMessageStruct(device, &receive, 100);
         if (rc == FREESPACE_SUCCESS) {
-            freespace_printMessage(stdout, readBuffer, length);
+            freespace_printMessageStruct(stdout, &receive);
         } else if (rc == FREESPACE_ERROR_TIMEOUT) {
             printf("<timeout>  Try moving the Loop/FRCM to wake it up.\n");
         } else if (rc == FREESPACE_ERROR_INTERRUPTED) {

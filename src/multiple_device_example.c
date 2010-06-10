@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -214,21 +214,14 @@ int timer_step() {
 }
 #endif
 
-static int useBodyFrame = 1;
 static int sendMessageEachLoop = 0;
 
-static int isSDAReport(const uint8_t* buffer, int len) {
-    return len > 2 && buffer[0] == 0x08 && buffer[1] == 0x01;
-}
-
-static void receiveCallback(FreespaceDeviceId id,
-                            const uint8_t* buffer,
-                            int length,
-                            void* cookie,
-                            int result) {
+static void receiveStructCallback(FreespaceDeviceId id,
+                                  struct freespace_message* m,
+                                  void* cookie,
+                                  int result) {
     int idx;
     int isProcessed = 0;
-    struct freespace_message s;
     for (idx = 0; idx < MAX_NUMBER_DEVICES; idx++) {
         if (devices[idx].id == id) {
             isProcessed = 1;
@@ -236,18 +229,18 @@ static void receiveCallback(FreespaceDeviceId id,
             if (result != FREESPACE_SUCCESS) {
                 devices[idx].msgReadError++;
             }
-	    freespace_decode_message(buffer, length, &s);
-	    if (useBodyFrame && s.messageType == FREESPACE_MESSAGE_BODYFRAME) {	          
-	        if (devices[idx].sequenceNumber + 1 != s.bodyFrame.sequenceNumber && devices[idx].sequenceNumber != 0) {
-		    devices[idx].lostPackets = s.bodyFrame.sequenceNumber - devices[idx].sequenceNumber;
-		}
-		devices[idx].sequenceNumber = s.bodyFrame.sequenceNumber;
-	    } else if (!useBodyFrame && isSDAReport(buffer, length)) {
-	        ++devices[idx].sequenceNumber;
-	    } else if (devices[idx].sequenceNumber == 0) {
-	        freespace_printMessage(stdout, buffer, length);
-	    }
-	    break;
+            if (m == 0) {
+                break;
+            }
+            if (m->messageType == FREESPACE_MESSAGE_BODYFRAME) {	          
+                if (devices[idx].sequenceNumber + 1 != m->bodyFrame.sequenceNumber && devices[idx].sequenceNumber != 0) {
+                    devices[idx].lostPackets = m->bodyFrame.sequenceNumber - devices[idx].sequenceNumber;
+                }
+                devices[idx].sequenceNumber = m->bodyFrame.sequenceNumber;
+            } else if (devices[idx].sequenceNumber == 0) {
+                freespace_printMessageStruct(stdout, m);
+            }
+            break;
         }
     }
     if (isProcessed == 0) {
@@ -274,13 +267,12 @@ static void sendCallback(FreespaceDeviceId id,
 }
 
 static void initDevice(FreespaceDeviceId id) {
-    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
-    struct freespace_DataMotionControl d;
+    struct freespace_message message;
     int rc;
     int idx;
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
-    freespace_setReceiveCallback(id, receiveCallback, NULL);
+    freespace_setReceiveStructCallback(id, receiveStructCallback, NULL);
 
     rc = freespace_openDevice(id);
     if (rc != 0) {
@@ -320,35 +312,20 @@ static void initDevice(FreespaceDeviceId id) {
         printf("Could not add device.\n");
     }
 
-    if (useBodyFrame) {
-        d.enableBodyMotion = 1;
-	d.enableUserPosition = 0;
-	d.inhibitPowerManager = 1;
-	d.enableMouseMovement = 0;
-	d.disableFreespace = 0;
-	rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
-    } else {
-        // You have to know what you're doing to make sense of this
-        buffer[0] = 34;
-        buffer[1] = 0x20;
-        rc = 2;
-    }
+    memset(&message, 0, sizeof(message));
+    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+    message.dataModeRequest.enableBodyMotion = 1;
+    message.dataModeRequest.inhibitPowerManager = 1;
 
-    if (rc > 0) {
-        rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
-        //rc = freespace_send(id, buffer, rc);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("Could not send message: %d.\n", rc);
-        }
-    } else {
-        printf("Could not encode message %d\n", rc);
+    rc = freespace_sendMessageStructAsync(id, &message, 1000, sendCallback, NULL);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Could not send message: %d.\n", rc);
     }
     /** --- END EXAMPLE INITIALIZATION OF DEVICE -- **/
 }
 
 static void cleanupDevice(FreespaceDeviceId id) {
-    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
-    struct freespace_DataMotionControl d;
+    struct freespace_message message;
     int rc;
     int idx;
 
@@ -362,29 +339,22 @@ static void cleanupDevice(FreespaceDeviceId id) {
     
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("%d> Sending message to enable mouse motion data.\n", id);
-    d.enableBodyMotion = 0;
-    d.enableUserPosition = 0;
-    d.inhibitPowerManager = 0;
-    d.enableMouseMovement = 1;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_send(id, buffer, rc);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("Could not send message: %d.\n", rc);
-        } else {
-	    //flush it to clear the DMC response message that might come in
-	    freespace_flush(id);
-#ifdef WIN32
-	    Sleep(1);
-#else
-	    usleep(1000);
-#endif
-	    freespace_flush(id);
-	}
+    memset(&message, 0, sizeof(message));
+    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+    message.dataModeRequest.enableMouseMovement = 1;
+    rc = freespace_sendMessageStruct(id, &message);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Could not send message: %d.\n", rc);
     } else {
-        printf("Could not encode message.\n");
-    }
+        //flush it to clear the DMC response message that might come in
+        freespace_flush(id);
+#ifdef WIN32
+        Sleep(1);
+#else
+        usleep(1000);
+#endif
+        freespace_flush(id);
+	}
     //close it
     printf("%d> Cleaning up...\n", id);
     freespace_closeDevice(id);
@@ -392,42 +362,16 @@ static void cleanupDevice(FreespaceDeviceId id) {
 }
 
 static void sendMessage(FreespaceDeviceId id) {
+    struct freespace_message message;
     int rc;
-    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
 
-    rc = freespace_encodeProductIDRequest(buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
-    }
-    rc = freespace_encodeBatteryLevelRequest(buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
-    }
-#if 0 //should only send this when changing modes
-    if (useBodyFrame) {
-        struct freespace_DataMotionControl d;
-        // Ensure in body frame mode.
-        d.enableBodyMotion = 1;
-	d.enableUserPosition = 0;
-	d.inhibitPowerManager = 1;
-	d.enableMouseMovement = 0;
-	d.disableFreespace = 0;
-	rc = freespace_encodeDataMotionControl(&d, (int8_t*) buffer, sizeof(buffer));
-    } else {
-        // You have to know what you're doing to make sense of this
-        buffer[0] = 34;
-        buffer[1] = 0x20;
-        rc = 2;
-    }
-    if (rc > 0) {
-        rc = freespace_sendAsync(id, buffer, rc, 1000, sendCallback, NULL);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("Could not send message: %d.\n", rc);
-        }
-    } else {
-        printf("Could not encode message.\n");
-    }
-#endif
+    memset(&message, 0, sizeof(message));
+    message.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
+    rc = freespace_sendMessageStructAsync(id, &message, 1000, sendCallback, NULL);
+
+    memset(&message, 0, sizeof(message));
+    message.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST;
+    rc = freespace_sendMessageStructAsync(id, &message, 1000, sendCallback, NULL);
 }
 
 static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId id, void* cookie) {
@@ -447,9 +391,7 @@ int main(int argc, char* argv[]) {
     printVersionInfo(argv[0]);
 
     for (idx = 1; idx < argc; ++idx) {
-        if (strcmp(argv[idx], "--use-multifsm-board") == 0) {
-            useBodyFrame = 0;
-        } else if (strcmp(argv[idx], "--send-message-each-loop") == 0) {
+        if (strcmp(argv[idx], "--send-message-each-loop") == 0) {
             sendMessageEachLoop = 1;
         }
     }
@@ -553,22 +495,16 @@ int main(int argc, char* argv[]) {
                 if (devices[idx].id < 0) {
                     continue;
                 }
-                if (useBodyFrame) {
-                    tmp = devices[idx].msgReadCurrent;
-                    devices[idx].msgReadDelta = tmp - devices[idx].msgReadLast;
-                    devices[idx].msgReadLast = tmp;
+                tmp = devices[idx].msgReadCurrent;
+                devices[idx].msgReadDelta = tmp - devices[idx].msgReadLast;
+                devices[idx].msgReadLast = tmp;
 
-                    tmp = devices[idx].msgSendCurrent;
-                    devices[idx].msgSendDelta = tmp - devices[idx].msgSendLast;
-                    devices[idx].msgSendLast = tmp;
+                tmp = devices[idx].msgSendCurrent;
+                devices[idx].msgSendDelta = tmp - devices[idx].msgSendLast;
+                devices[idx].msgSendLast = tmp;
 
-                    printf("[%02d: %02d %03d %05d %d]   ", devices[idx].id, devices[idx].msgSendDelta,
-                        devices[idx].msgReadDelta, devices[idx].lostPackets, devices[idx].sequenceNumber);
-                } else {
-                    //print the read/send errored and count (sequenceNumber)
-                    printf("[%02d: %02d %02d %05d - %d %d]   ", devices[idx].id, devices[idx].msgReadError, 
-                        devices[idx].msgSendError, devices[idx].sequenceNumber, devices[idx].msgReadCurrent, devices[idx].msgSendCurrent);
-                }
+                printf("[%02d: %02d %03d %05d %d]   ", devices[idx].id, devices[idx].msgSendDelta,
+                devices[idx].msgReadDelta, devices[idx].lostPackets, devices[idx].sequenceNumber);
                 offset++;
                 if (offset >= 3) {
                     printf("\n");

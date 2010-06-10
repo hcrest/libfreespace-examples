@@ -43,3 +43,4 @@ libfreespace-examples-*-win32.zip
 Debug
 src/game3d_example
 *.msi
+win/vs2005/Release

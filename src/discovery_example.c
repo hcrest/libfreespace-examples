@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

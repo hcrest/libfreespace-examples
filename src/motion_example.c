@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,11 +45,13 @@
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
 
+#include <string.h>
 
 int main(int argc, char* argv[]) {
-    struct freespace_DataMotionControl d;
+    struct freespace_message message;
+    struct freespace_DataModeRequest * req;
     FreespaceDeviceId device;
-    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
+    struct FreespaceDeviceInfo info;
     int numIds;
     int rc;
 
@@ -82,6 +84,9 @@ int main(int argc, char* argv[]) {
     // Display the device information.
     printDeviceInfo(device);
 
+    // Cache device information
+    freespace_getDeviceInfo(device, &info);
+
     rc = freespace_flush(device);
     if (rc != FREESPACE_SUCCESS) {
         printf("Error flushing device: %d\n", rc);
@@ -89,19 +94,14 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Sending message to enable body-frame motion data.\n");
-    d.enableBodyMotion = 1;
-    d.enableUserPosition = 0;
-    d.inhibitPowerManager = 0;
-    d.enableMouseMovement = 0;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_send(device, buffer, rc);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("Could not send message: %d.\n", rc);
-        }
-    } else {
-        printf("Could not encode message.\n");
+    memset(&message, 0, sizeof(message));
+    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+    req = &message.dataModeRequest;
+    req->enableBodyMotion = 1;
+    req->inhibitPowerManager = 1;
+    rc = freespace_sendMessageStruct(device, &message);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Could not send message: %d.\n", rc);
     }
     /** --- END EXAMPLE INITIALIZATION OF DEVICE -- **/
 
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     while (!quit) {
         int length;
 
-        rc = freespace_read(device, buffer, sizeof(buffer), 1000, &length);
+        rc = freespace_readMessageStruct(device, &message, 100);
         if (rc == FREESPACE_ERROR_TIMEOUT ||
             rc == FREESPACE_ERROR_INTERRUPTED) {
             // Both timeout and interrupted are ok.
@@ -124,24 +124,17 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        freespace_printMessage(stdout, buffer, length);
+        freespace_printMessageStruct(stdout, &message);
     }
 
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("Sending message to enable mouse motion data.\n");
-    d.enableBodyMotion = 0;
-    d.enableUserPosition = 0;
-    d.inhibitPowerManager = 0;
-    d.enableMouseMovement = 1;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_send(device, buffer, rc);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("Could not send message: %d.\n", rc);
-        }
-    } else {
-        printf("Could not encode message.\n");
+    memset(&message, 0, sizeof(message));
+    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+    req->enableMouseMovement = 1;
+    rc = freespace_sendMessageStruct(device, &message);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Could not send message: %d.\n", rc);
     }
 
     printf("Cleaning up...\n");
