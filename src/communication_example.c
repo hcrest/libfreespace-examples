@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
         int length;
 
         // Send a battery level request message.
-        rc = freespace_sendMessageStruct(device, FREESPACE_DEFAULT_ADDRESS_HANDHELD, &send);
+        rc = freespace_sendMessageStruct(device, &send, 0);
         if (rc != FREESPACE_SUCCESS) {
             printf("Could not send message: %d.\n", rc);
         }
