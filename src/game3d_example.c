@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
  */
 
 #include <freespace/freespace.h>
-#include <freespace/freespace_codecs.h>
 #include "appControlHandler.h"
 
 #include <math.h>
@@ -108,9 +107,8 @@ static void getEulerAnglesFromUserFrame(const struct freespace_UserFrame* user,
 
 static void* inputThreadFunction(void* arg) {
     struct InputLoopState* state = (struct InputLoopState*) arg;
-    struct freespace_DataMotionControl d;
+    struct freespace_message m;
     FreespaceDeviceId device;
-    uint8_t buffer[FREESPACE_MAX_INPUT_MESSAGE_SIZE];
     int numIds;
     int rc;
 
@@ -140,28 +138,21 @@ static void* inputThreadFunction(void* arg) {
         exit(1);
     }
 
-    d.enableBodyMotion = 0;
-    d.enableUserPosition = 1;
-    d.inhibitPowerManager = 1;
-    d.enableMouseMovement = 0;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_send(device, buffer, rc);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("freespaceInputThread: Could not send message: %d.\n", rc);
-        }
-    } else {
-        printf("freespaceInputThread: Could not encode message.\n");
+    memset(&m, 0, sizeof(m));
+    m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+    m.dataModeRequest.enableUserPosition = 1;
+    m.dataModeRequest.inhibitPowerManager = 1;
+    rc = freespace_sendMessageStruct(device, &m, 0);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
     /** --- END EXAMPLE INITIALIZATION OF DEVICE -- **/
 
     state->initialized_ = 1;
     while (!state->quit_) {
-        struct freespace_UserFrame user;
         int length;
 
-        rc = freespace_read(device, buffer, sizeof(buffer), 1000 /* 1 second timeout */, &length);
+        rc = freespace_readMessageStruct(device, &m, 1000 /* 1 second timeout */);
         if (rc == FREESPACE_ERROR_TIMEOUT ||
             rc == FREESPACE_ERROR_INTERRUPTED) {
             continue;
@@ -172,32 +163,32 @@ static void* inputThreadFunction(void* arg) {
             continue;
         }
 
-        // Check if this is a body frame message.
-        if (freespace_decodeUserFrame(buffer, length, &user) == FREESPACE_SUCCESS) {
+        // Check if this is a user frame message.
+        if (m.messageType == FREESPACE_MESSAGE_USERFRAME) {
             pthread_mutex_lock(&state->lock_);
 
             // Update state fields.
-            state->user_.button1 = user.button1;
-            state->user_.button2 = user.button2;
-            state->user_.button3 = user.button3;
-            state->user_.button4 = user.button4;
-            state->user_.button5 = user.button5;
+            state->user_.button1 = m.userFrame.button1;
+            state->user_.button2 = m.userFrame.button2;
+            state->user_.button3 = m.userFrame.button3;
+            state->user_.button4 = m.userFrame.button4;
+            state->user_.button5 = m.userFrame.button5;
 
-            state->user_.sequenceNumber = user.sequenceNumber;
+            state->user_.sequenceNumber = m.userFrame.sequenceNumber;
 
-            state->user_.linearPosX = user.linearPosX;
-            state->user_.linearPosY = user.linearPosY;
-            state->user_.linearPosZ = user.linearPosZ;
+            state->user_.linearPosX = m.userFrame.linearPosX;
+            state->user_.linearPosY = m.userFrame.linearPosY;
+            state->user_.linearPosZ = m.userFrame.linearPosZ;
 
-            state->user_.angularPosA = user.angularPosA;
-            state->user_.angularPosB = user.angularPosB;
-            state->user_.angularPosC = user.angularPosC;
-            state->user_.angularPosD = user.angularPosD;
+            state->user_.angularPosA = m.userFrame.angularPosA;
+            state->user_.angularPosB = m.userFrame.angularPosB;
+            state->user_.angularPosC = m.userFrame.angularPosC;
+            state->user_.angularPosD = m.userFrame.angularPosD;
 
             // Update accumulation fields
-            state->user_.deltaX += user.deltaX;
-            state->user_.deltaY += user.deltaY;
-            state->user_.deltaWheel += user.deltaWheel;
+            state->user_.deltaX += m.userFrame.deltaX;
+            state->user_.deltaY += m.userFrame.deltaY;
+            state->user_.deltaWheel += m.userFrame.deltaWheel;
 
             pthread_mutex_unlock(&state->lock_);
         }
@@ -205,19 +196,12 @@ static void* inputThreadFunction(void* arg) {
 
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("\n\nfreespaceInputThread: Cleaning up...\n");
-    d.enableBodyMotion = 0;
-    d.enableUserPosition = 0;
-    d.inhibitPowerManager = 0;
-    d.enableMouseMovement = 1;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_send(device, buffer, rc);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("freespaceInputThread: Could not send message: %d.\n", rc);
-        }
-    } else {
-        printf("freespaceInputThread: Could not encode message.\n");
+    memset(&m, 0, sizeof(m));
+    m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+    m.dataModeRequest.enableMouseMovement = 1;
+    rc = freespace_sendMessageStruct(device, &m, 0);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
 
     freespace_closeDevice(device);

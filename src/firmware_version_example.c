@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,46 +42,37 @@
 #endif
 
 #include <freespace/freespace.h>
-#include <freespace/freespace_codecs.h>
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
 
 
 #define BUFFER_LENGTH 1024
 
-static void receiveCallback(FreespaceDeviceId id,
-                            const uint8_t* buffer,
-                            int length,
-                            void* cookie,
-                            int result) {
+static void receiveStructCallback(FreespaceDeviceId id,
+                                  struct freespace_message* m,
+                                  void* cookie,
+                                  int result) {
     int rc;
     struct FreespaceDeviceInfo info;
 
-    if (result == FREESPACE_SUCCESS) {
-        struct freespace_message s;
-        rc = freespace_decode_message(buffer, length, &s);
-
-        if (rc != FREESPACE_SUCCESS) {
-            printf ("Error reading message: %d\n", rc);
-            return;
-        }
-
-        if (s.messageType == FREESPACE_MESSAGE_PRODUCTIDRESPONSE) {
+    if (result == FREESPACE_SUCCESS && m != NULL) {
+        if (m->messageType == FREESPACE_MESSAGE_PRODUCTIDRESPONSE) {
             rc = freespace_getDeviceInfo(id, &info);
             if (rc != FREESPACE_SUCCESS) {
                 return;
             }
 
-            rc = freespace_getDeviceInfo(id, &info);
-            if (rc != FREESPACE_SUCCESS) {
-                return;
+            struct freespace_ProductIDResponse* pr = &(m->productIDResponse);
+
+            if (pr->deviceClass == 1) {
+                // Print out information including software version
+                printf("Device ID: %d\n   Device = %s\n   Software Version of dongle = %d.%d.%d\n",
+                       id, info.name, pr->swVersionMajor, pr->swVersionMinor, pr->swVersionPatch);
+            } else if (pr->deviceClass == 2) {
+                // Print out information including software version
+                printf("Device ID: %d\n   Device = %s\n   Software Version of handheld = %d.%d.%d\n",
+                       id, info.name, pr->swVersionMajor, pr->swVersionMinor, pr->swVersionPatch);
             }
-
-            struct freespace_ProductIDResponse productResponse = s.productIDResponse;
-
-            // Print out information including software version
-            printf("Device ID: %d\n   Device = %s\n   Software Version = %d.%d\n",
-                      id, info.name, productResponse.swVersionMajor, productResponse.swVersionMinor);
         }
     } else {
         if (result == FREESPACE_ERROR_NOT_FOUND) {
@@ -103,7 +94,8 @@ void hotplugCallback(enum freespace_hotplugEvent event,
                      FreespaceDeviceId id,
                      void* cookie) {
     int rc;
-    uint8_t message[BUFFER_LENGTH];
+    struct freespace_message m;
+    struct FreespaceDeviceInfo info;
 
     if (event == FREESPACE_HOTPLUG_INSERTION) {
         rc = freespace_openDevice(id);
@@ -112,10 +104,15 @@ void hotplugCallback(enum freespace_hotplugEvent event,
             return;
         }
 
-        freespace_setReceiveCallback(id, receiveCallback, NULL);
+        freespace_setReceiveStructCallback(id, receiveStructCallback, NULL);
+        rc = freespace_getDeviceInfo(id, &info);
 
-        rc = freespace_encodeProductIDRequest(message, BUFFER_LENGTH);
-        rc = freespace_send(id, message, rc);
+        memset(&m, 0, sizeof(m));
+        m.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
+        if (rc == FREESPACE_SUCCESS && info.hVer == 2) {
+            rc = freespace_sendMessageStruct(id, &m, 1);
+        }
+        rc = freespace_sendMessageStruct(id, &m, 0);
         if (rc != FREESPACE_SUCCESS) {
             printf("Error sending productID request\n");
             return;

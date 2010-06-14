@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,24 +39,21 @@
 #include <unistd.h>
 
 #include <freespace/freespace.h>
-#include <freespace/freespace_codecs.h>
 #include "appControlHandler.h"
 
 struct freespace_BodyFrame cachedBodyFrame;
 
-static void receiveCallback(FreespaceDeviceId id,
-                            const uint8_t* buffer,
-                            int length,
+static void receiveStructCallback(FreespaceDeviceId id,
+                            struct freespace_message* m,
                             void* cookie,
                             int result) {
-    if (result == FREESPACE_SUCCESS) {
-        freespace_decodeBodyFrame(buffer, length, &cachedBodyFrame);
+    if (result == FREESPACE_SUCCESS && m != NULL && m->messageType == FREESPACE_MESSAGE_BODYFRAME) {
+        cachedBodyFrame = m->bodyFrame;
     }
 }
 
 static FreespaceDeviceId initializeFreespace() {
-    uint8_t buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
-    struct freespace_DataMotionControl d;
+    struct freespace_message m;
     FreespaceDeviceId device;
     int numIds;
     int rc;
@@ -80,7 +77,7 @@ static FreespaceDeviceId initializeFreespace() {
         printf("freespaceInputThread: Error opening device: %d\n", rc);
         exit(1);
     }
-    freespace_setReceiveCallback(device, receiveCallback, NULL);
+    freespace_setReceiveStructCallback(device, receiveStructCallback, NULL);
 
     rc = freespace_flush(device);
     if (rc != FREESPACE_SUCCESS) {
@@ -90,19 +87,13 @@ static FreespaceDeviceId initializeFreespace() {
 
     memset(&cachedBodyFrame, 0, sizeof(cachedBodyFrame));
 
-    d.enableBodyMotion = 1;
-    d.enableUserPosition = 0;
-    d.inhibitPowerManager = 1;
-    d.enableMouseMovement = 0;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_send(device, buffer, rc);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("freespaceInputThread: Could not send message: %d.\n", rc);
-        }
-    } else {
-        printf("freespaceInputThread: Could not encode message.\n");
+    memset(&m, 0, sizeof(m));
+    m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+    m.dataModeRequest.enableBodyMotion = 1;
+    m.dataModeRequest.inhibitPowerManager = 1;
+    rc = freespace_sendMessageStruct(device, &m, 0);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
     /** --- END EXAMPLE INITIALIZATION OF DEVICE -- **/
 
@@ -110,25 +101,17 @@ static FreespaceDeviceId initializeFreespace() {
 }
 
 static void finalizeFreespace(FreespaceDeviceId device) {
-    uint8_t buffer[FREESPACE_MAX_OUTPUT_MESSAGE_SIZE];
-    struct freespace_DataMotionControl d;
+    struct freespace_message m;
     int rc;
 
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("\n\nfreespaceInputThread: Cleaning up...\n");
-    d.enableBodyMotion = 0;
-    d.enableUserPosition = 0;
-    d.inhibitPowerManager = 0;
-    d.enableMouseMovement = 1;
-    d.disableFreespace = 0;
-    rc = freespace_encodeDataMotionControl(&d, buffer, sizeof(buffer));
-    if (rc > 0) {
-        rc = freespace_send(device, buffer, rc);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("freespaceInputThread: Could not send message: %d.\n", rc);
-        }
-    } else {
-        printf("freespaceInputThread: Could not encode message.\n");
+    memset(&m, 0, sizeof(m));
+    m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+    m.dataModeRequest.enableMouseMovement = 1;
+    rc = freespace_sendMessageStruct(device, &m, 0);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
 
     freespace_closeDevice(device);
