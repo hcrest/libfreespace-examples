@@ -45,13 +45,14 @@
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
 
+#include <string.h>
 
 #define BUFFER_LENGTH 1024
 
-static void receiveStructCallback(FreespaceDeviceId id,
-                                  struct freespace_message* m,
-                                  void* cookie,
-                                  int result) {
+static void receiveMessageCallback(FreespaceDeviceId id,
+                                   struct freespace_message* m,
+                                   void* cookie,
+                                   int result) {
     int rc;
     struct FreespaceDeviceInfo info;
 
@@ -104,15 +105,15 @@ void hotplugCallback(enum freespace_hotplugEvent event,
             return;
         }
 
-        freespace_setReceiveStructCallback(id, receiveStructCallback, NULL);
+        freespace_setReceiveMessageCallback(id, receiveMessageCallback, NULL);
         rc = freespace_getDeviceInfo(id, &info);
 
         memset(&m, 0, sizeof(m));
         m.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
         if (rc == FREESPACE_SUCCESS && info.hVer == 2) {
-            rc = freespace_sendMessageStruct(id, &m, 1);
+            rc = freespace_sendMessage(id, &m, 1);
         }
-        rc = freespace_sendMessageStruct(id, &m, 0);
+        rc = freespace_sendMessage(id, &m, 0);
         if (rc != FREESPACE_SUCCESS) {
             printf("Error sending productID request\n");
             return;

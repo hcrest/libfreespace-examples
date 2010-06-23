@@ -121,7 +121,7 @@ static void* inputThreadFunction(void* arg) {
     m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     m.dataModeRequest.enableBodyMotion = 1;
     m.dataModeRequest.inhibitPowerManager = 1;
-    rc = freespace_sendMessageStruct(device, &m, 0);
+    rc = freespace_sendMessage(device, &m, 0);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
@@ -129,9 +129,7 @@ static void* inputThreadFunction(void* arg) {
 
     state->initialized_ = 1;
     while (!state->quit_) {
-        int length;
-
-        rc = freespace_readMessageStruct(device, &m, 1000 /* 1 second timeout */);
+        rc = freespace_readMessage(device, &m, 1000 /* 1 second timeout */);
         if (rc == FREESPACE_ERROR_TIMEOUT ||
             rc == FREESPACE_ERROR_INTERRUPTED) {
             continue;
@@ -177,7 +175,7 @@ static void* inputThreadFunction(void* arg) {
     memset(&m, 0, sizeof(m));
     m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     m.dataModeRequest.enableMouseMovement = 1;
-    rc = freespace_sendMessageStruct(device, &m, 0);
+    rc = freespace_sendMessage(device, &m, 0);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
