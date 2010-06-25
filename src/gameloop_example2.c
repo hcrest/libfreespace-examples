@@ -91,7 +91,7 @@ static FreespaceDeviceId initializeFreespace() {
     m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     m.dataModeRequest.enableBodyMotion = 1;
     m.dataModeRequest.inhibitPowerManager = 1;
-    rc = freespace_sendMessage(device, &m, 0);
+    rc = freespace_sendMessage(device, &m);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
@@ -109,7 +109,7 @@ static void finalizeFreespace(FreespaceDeviceId device) {
     memset(&m, 0, sizeof(m));
     m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     m.dataModeRequest.enableMouseMovement = 1;
-    rc = freespace_sendMessage(device, &m, 0);
+    rc = freespace_sendMessage(device, &m);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }

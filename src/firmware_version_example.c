@@ -110,10 +110,11 @@ void hotplugCallback(enum freespace_hotplugEvent event,
 
         memset(&m, 0, sizeof(m));
         m.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
+        rc = freespace_sendMessage(id, &m);
         if (rc == FREESPACE_SUCCESS && info.hVer == 2) {
-            rc = freespace_sendMessage(id, &m, 1);
+            m.dest = 1;
+            rc = freespace_sendMessage(id, &m);
         }
-        rc = freespace_sendMessage(id, &m, 0);
         if (rc != FREESPACE_SUCCESS) {
             printf("Error sending productID request\n");
             return;
