@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
     batt = &(send.batteryLevelRequest);
     while (!quit) {
         // Send a battery level request message.
-        rc = freespace_sendMessage(device, &send, 0);
+        rc = freespace_sendMessage(device, &send);
         if (rc != FREESPACE_SUCCESS) {
             printf("Could not send message: %d.\n", rc);
         }

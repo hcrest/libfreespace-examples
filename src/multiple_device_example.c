@@ -317,7 +317,7 @@ static void initDevice(FreespaceDeviceId id) {
     message.dataModeRequest.enableBodyMotion = 1;
     message.dataModeRequest.inhibitPowerManager = 1;
 
-    rc = freespace_sendMessageAsync(id, &message, 0, 1000, sendCallback, NULL);
+    rc = freespace_sendMessageAsync(id, &message, 1000, sendCallback, NULL);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
@@ -342,7 +342,7 @@ static void cleanupDevice(FreespaceDeviceId id) {
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     message.dataModeRequest.enableMouseMovement = 1;
-    rc = freespace_sendMessage(id, &message, 0);
+    rc = freespace_sendMessage(id, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     } else {
@@ -367,11 +367,11 @@ static void sendMessage(FreespaceDeviceId id) {
 
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
-    rc = freespace_sendMessageAsync(id, &message, 0, 1000, sendCallback, NULL);
+    rc = freespace_sendMessageAsync(id, &message, 1000, sendCallback, NULL);
 
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST;
-    rc = freespace_sendMessageAsync(id, &message, 0, 1000, sendCallback, NULL);
+    rc = freespace_sendMessageAsync(id, &message, 1000, sendCallback, NULL);
 }
 
 static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId id, void* cookie) {

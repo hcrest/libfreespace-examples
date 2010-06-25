@@ -202,7 +202,7 @@ static void initDevice(FreespaceDeviceId id) {
     req = &(message.dataModeRequest);
     req->enableBodyMotion = 1;
     req->inhibitPowerManager = 1;
-    rc = freespace_sendMessageAsync(id, &message, 0, 1000, NULL, NULL);
+    rc = freespace_sendMessageAsync(id, &message, 1000, NULL, NULL);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
@@ -219,7 +219,7 @@ static void cleanupDevice(FreespaceDeviceId id) {
     message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     message.dataModeRequest.enableMouseMovement = 1;
 
-    rc = freespace_sendMessage(id, &message, 0);
+    rc = freespace_sendMessage(id, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
