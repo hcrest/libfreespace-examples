@@ -15,42 +15,6 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_14D1A1AD13A64901AF24CB4865140702"
-        "OwnerKey" = "8:_1630DB642BD34B459EF9A71CE5F2C2AC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_14D1A1AD13A64901AF24CB4865140702"
-        "OwnerKey" = "8:_826E20FA21A74A7CB110C840ACEAA780"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_14D1A1AD13A64901AF24CB4865140702"
-        "OwnerKey" = "8:_7E89477D287243B69B2994E73959E6C8"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_14D1A1AD13A64901AF24CB4865140702"
-        "OwnerKey" = "8:_5CE60AF9E0AA46C3B6D217ACECE19175"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_14D1A1AD13A64901AF24CB4865140702"
-        "OwnerKey" = "8:_4A3A5601B9804BC8A1DC109CA5374403"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_14D1A1AD13A64901AF24CB4865140702"
-        "OwnerKey" = "8:_2BADF99FFE1141F6ADB10ED4618CD1B2"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_1630DB642BD34B459EF9A71CE5F2C2AC"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -75,6 +39,42 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
+        "OwnerKey" = "8:_1630DB642BD34B459EF9A71CE5F2C2AC"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
+        "OwnerKey" = "8:_826E20FA21A74A7CB110C840ACEAA780"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
+        "OwnerKey" = "8:_7E89477D287243B69B2994E73959E6C8"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
+        "OwnerKey" = "8:_5CE60AF9E0AA46C3B6D217ACECE19175"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
+        "OwnerKey" = "8:_4A3A5601B9804BC8A1DC109CA5374403"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
+        "OwnerKey" = "8:_2BADF99FFE1141F6ADB10ED4618CD1B2"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_7E89477D287243B69B2994E73959E6C8"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -87,12 +87,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_8DE0214E0D2B4CF0A575F431AE5A4201"
-        "OwnerKey" = "8:_14D1A1AD13A64901AF24CB4865140702"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_BF05E2BB96EE2A04AEE411C549BDB868"
         "OwnerKey" = "8:_5CE60AF9E0AA46C3B6D217ACECE19175"
         "MsmSig" = "8:_UNDEFINED"
@@ -101,6 +95,12 @@
         {
         "MsmKey" = "8:_D9BB2B9DCF3119D1914DB8532E81BCD1"
         "OwnerKey" = "8:_5CE60AF9E0AA46C3B6D217ACECE19175"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F8F7324778734302812D02CB7231AB1E"
+        "OwnerKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -328,14 +328,14 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:libfreespace-examples"
-        "ProductCode" = "8:{4A2C6CB4-DE53-4303-9EB9-8874DA8670B2}"
-        "PackageCode" = "8:{0E5E32BF-8F22-43CD-ABAE-A6BA219DE698}"
+        "ProductCode" = "8:{D00B1F02-D189-414E-926F-D40A50D0090B}"
+        "PackageCode" = "8:{B7AD6B37-B1AD-416D-9D49-CD4AAF6394BC}"
         "UpgradeCode" = "8:{50546B4A-404F-43A1-9EDC-FBBD77C9BB40}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.4"
+        "ProductVersion" = "8:0.5"
         "Manufacturer" = "8:Hillcrest Labs"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://libfreespace.hillcrestlabs.com"
@@ -872,7 +872,7 @@
         }
         "MergeModule"
         {
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_14D1A1AD13A64901AF24CB4865140702"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_670F18DC0DCE44429DC77F03AA08760D"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"
@@ -886,7 +886,7 @@
             "Feature" = "8:"
             "IsolateTo" = "8:"
             }
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_8DE0214E0D2B4CF0A575F431AE5A4201"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_F8F7324778734302812D02CB7231AB1E"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"
@@ -905,7 +905,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_1630DB642BD34B459EF9A71CE5F2C2AC"
             {
-            "SourcePath" = "8:release\\discovery_example.exe"
+            "SourcePath" = "8:Release\\discovery_example.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -933,7 +933,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_2BADF99FFE1141F6ADB10ED4618CD1B2"
             {
-            "SourcePath" = "8:release\\multiple_device_example.exe"
+            "SourcePath" = "8:Release\\multiple_device_example.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -961,7 +961,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_4A3A5601B9804BC8A1DC109CA5374403"
             {
-            "SourcePath" = "8:release\\motion_example_async.exe"
+            "SourcePath" = "8:Release\\motion_example_async.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -989,7 +989,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_5CE60AF9E0AA46C3B6D217ACECE19175"
             {
-            "SourcePath" = "8:release\\libfreespace.dll"
+            "SourcePath" = "8:Release\\libfreespace.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -1017,7 +1017,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_7E89477D287243B69B2994E73959E6C8"
             {
-            "SourcePath" = "8:release\\communication_example.exe"
+            "SourcePath" = "8:Release\\communication_example.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -1045,7 +1045,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_826E20FA21A74A7CB110C840ACEAA780"
             {
-            "SourcePath" = "8:release\\motion_example.exe"
+            "SourcePath" = "8:Release\\motion_example.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -1071,6 +1071,9 @@
                 {
                 }
             }
+        }
+        "VJSharpPlugin"
+        {
         }
     }
 }

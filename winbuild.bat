@@ -7,10 +7,10 @@ REM This must be run from the Visual Studio 2005 Command Prompt
 
 REM Clean up
 erase %NAME%
-devenv win\vs2005\examples.sln /clean release
+devenv win\vs2005\examples.sln /clean "Release|Win32" /project "Setup"
 
 REM Build
-devenv win\vs2005\examples.sln /build release
+devenv win\vs2005\examples.sln /build "Release|Win32" /project "Setup"
 
 echo Copying installer
 copy win\vs2005\release\Installer\libfreespace-examples-installer.msi %NAME%
