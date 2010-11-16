@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     req = &message.dataModeRequest;
     req->enableBodyMotion = 1;
     req->inhibitPowerManager = 1;
-    rc = freespace_sendMessageStruct(device, &message, 0);
+    rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
@@ -108,9 +108,7 @@ int main(int argc, char* argv[]) {
 
     printf("Listening for messages.\n");
     while (!quit) {
-        int length;
-
-        rc = freespace_readMessageStruct(device, &message, 100);
+        rc = freespace_readMessage(device, &message, 100);
         if (rc == FREESPACE_ERROR_TIMEOUT ||
             rc == FREESPACE_ERROR_INTERRUPTED) {
             // Both timeout and interrupted are ok.
@@ -124,7 +122,7 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        freespace_printMessageStruct(stdout, &message);
+        freespace_printMessage(stdout, &message);
     }
 
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
@@ -132,7 +130,7 @@ int main(int argc, char* argv[]) {
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     req->enableMouseMovement = 1;
-    rc = freespace_sendMessageStruct(device, &message, 0);
+    rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }

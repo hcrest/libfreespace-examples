@@ -91,18 +91,16 @@ int main(int argc, char* argv[]) {
     send.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST;
     batt = &(send.batteryLevelRequest);
     while (!quit) {
-        int length;
-
         // Send a battery level request message.
-        rc = freespace_sendMessageStruct(device, &send, 0);
+        rc = freespace_sendMessage(device, &send);
         if (rc != FREESPACE_SUCCESS) {
             printf("Could not send message: %d.\n", rc);
         }
 
         // Read the battery level response message (hopefully).
-        rc = freespace_readMessageStruct(device, &receive, 100);
+        rc = freespace_readMessage(device, &receive, 100);
         if (rc == FREESPACE_SUCCESS) {
-            freespace_printMessageStruct(stdout, &receive);
+            freespace_printMessage(stdout, &receive);
         } else if (rc == FREESPACE_ERROR_TIMEOUT) {
             printf("<timeout>  Try moving the Loop/FRCM to wake it up.\n");
         } else if (rc == FREESPACE_ERROR_INTERRUPTED) {

@@ -43,7 +43,7 @@
 
 struct freespace_BodyFrame cachedBodyFrame;
 
-static void receiveStructCallback(FreespaceDeviceId id,
+static void receiveMessageCallback(FreespaceDeviceId id,
                             struct freespace_message* m,
                             void* cookie,
                             int result) {
@@ -77,7 +77,7 @@ static FreespaceDeviceId initializeFreespace() {
         printf("freespaceInputThread: Error opening device: %d\n", rc);
         exit(1);
     }
-    freespace_setReceiveStructCallback(device, receiveStructCallback, NULL);
+    freespace_setReceiveMessageCallback(device, receiveMessageCallback, NULL);
 
     rc = freespace_flush(device);
     if (rc != FREESPACE_SUCCESS) {
@@ -91,7 +91,7 @@ static FreespaceDeviceId initializeFreespace() {
     m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     m.dataModeRequest.enableBodyMotion = 1;
     m.dataModeRequest.inhibitPowerManager = 1;
-    rc = freespace_sendMessageStruct(device, &m, 0);
+    rc = freespace_sendMessage(device, &m);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
@@ -109,7 +109,7 @@ static void finalizeFreespace(FreespaceDeviceId device) {
     memset(&m, 0, sizeof(m));
     m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     m.dataModeRequest.enableMouseMovement = 1;
-    rc = freespace_sendMessageStruct(device, &m, 0);
+    rc = freespace_sendMessage(device, &m);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }

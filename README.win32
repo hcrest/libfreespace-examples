@@ -1,0 +1,18 @@
+General Information
+===================
+
+This package contains example programs that demonstrate common usage of
+the libfreespace library.
+
+
+Building
+========
+
+Use Visual Studio.
+To build the distribution MSI, run "winbuild.bat" from the VS command line.
+
+Troubleshooting
+===============
+
+See the libfreespace README for troubleshooting.
+

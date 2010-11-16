@@ -238,7 +238,7 @@ static void receiveStructCallback(FreespaceDeviceId id,
                 }
                 devices[idx].sequenceNumber = m->bodyFrame.sequenceNumber;
             } else if (devices[idx].sequenceNumber == 0) {
-                freespace_printMessageStruct(stdout, m);
+                freespace_printMessage(stdout, m);
             }
             break;
         }
@@ -272,7 +272,7 @@ static void initDevice(FreespaceDeviceId id) {
     int idx;
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
-    freespace_setReceiveStructCallback(id, receiveStructCallback, NULL);
+    freespace_setReceiveMessageCallback(id, receiveStructCallback, NULL);
 
     rc = freespace_openDevice(id);
     if (rc != 0) {
@@ -317,7 +317,7 @@ static void initDevice(FreespaceDeviceId id) {
     message.dataModeRequest.enableBodyMotion = 1;
     message.dataModeRequest.inhibitPowerManager = 1;
 
-    rc = freespace_sendMessageStructAsync(id, &message, 0, 1000, sendCallback, NULL);
+    rc = freespace_sendMessageAsync(id, &message, 1000, sendCallback, NULL);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
@@ -342,7 +342,7 @@ static void cleanupDevice(FreespaceDeviceId id) {
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     message.dataModeRequest.enableMouseMovement = 1;
-    rc = freespace_sendMessageStruct(id, &message, 0);
+    rc = freespace_sendMessage(id, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     } else {
@@ -367,11 +367,11 @@ static void sendMessage(FreespaceDeviceId id) {
 
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
-    rc = freespace_sendMessageStructAsync(id, &message, 0, 1000, sendCallback, NULL);
+    rc = freespace_sendMessageAsync(id, &message, 1000, sendCallback, NULL);
 
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST;
-    rc = freespace_sendMessageStructAsync(id, &message, 0, 1000, sendCallback, NULL);
+    rc = freespace_sendMessageAsync(id, &message, 1000, sendCallback, NULL);
 }
 
 static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId id, void* cookie) {

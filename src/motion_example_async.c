@@ -152,14 +152,14 @@ static void remove_pollfd(FreespaceFileHandleType fd) {
 }
 #endif
 
-static void receiveStructCallback(FreespaceDeviceId id,
+static void receiveMessageCallback(FreespaceDeviceId id,
                             struct freespace_message * message,
                             void* cookie,
                             int result) {
     printf("%d> ", id);
     if (result == FREESPACE_SUCCESS) {
         if (message != 0) {
-            freespace_printMessageStruct(stdout, message);
+            freespace_printMessage(stdout, message);
         }
     } else {
         printf("Error %d.\n", result);
@@ -194,7 +194,7 @@ static void initDevice(FreespaceDeviceId id) {
     }
 
 
-    freespace_setReceiveStructCallback(id, receiveStructCallback, NULL);
+    freespace_setReceiveMessageCallback(id, receiveMessageCallback, NULL);
 
     printf("Sending message to enable body-frame motion data.\n");
     memset(&message, 0, sizeof(message));
@@ -202,7 +202,7 @@ static void initDevice(FreespaceDeviceId id) {
     req = &(message.dataModeRequest);
     req->enableBodyMotion = 1;
     req->inhibitPowerManager = 1;
-    rc = freespace_sendMessageStructAsync(id, &message, 0, 1000, NULL, NULL);
+    rc = freespace_sendMessageAsync(id, &message, 1000, NULL, NULL);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
@@ -219,7 +219,7 @@ static void cleanupDevice(FreespaceDeviceId id) {
     message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
     message.dataModeRequest.enableMouseMovement = 1;
 
-    rc = freespace_sendMessageStruct(id, &message, 0);
+    rc = freespace_sendMessage(id, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
