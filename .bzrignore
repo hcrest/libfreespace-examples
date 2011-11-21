@@ -30,10 +30,12 @@ src/Debug
 src/debug
 src/Release
 src/release
+src/*.vcxproj.*.user
 src/*.vcproj.*.user
 config
 firmware_version_example
 *example*.vcproj.*.user
+*.vcxproj.user
 win/vs2005/release
 win/vs2008/release
 libfreespace-examples-*-win32.zip
@@ -44,3 +46,13 @@ Debug
 src/game3d_example
 *.msi
 win/vs2005/Release
+unknown:
+win/vs2010/Release/
+win/vs2010/communication_example/
+win/vs2010/discovery_example/
+win/vs2010/examples.opensdf
+win/vs2010/examples.sdf
+win/vs2010/ipch/
+win/vs2010/motion_example/
+win/vs2010/motion_example_async/
+win/vs2010/multiple_device_example/
