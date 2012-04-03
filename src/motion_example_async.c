@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifdef _WIN32
-#include "stdafx.h"
+#include "win32/stdafx.h"
 #include <stdio.h>
 #else
 #define _GNU_SOURCE // for ppoll
@@ -172,6 +172,7 @@ static void receiveMessageCallback(FreespaceDeviceId id,
 static void initDevice(FreespaceDeviceId id) {
     struct freespace_message message;
     struct freespace_DataModeRequest * req;
+    struct freespace_DataModeControlV2Request * req2;
     int rc;
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
@@ -198,10 +199,17 @@ static void initDevice(FreespaceDeviceId id) {
 
     printf("Sending message to enable body-frame motion data.\n");
     memset(&message, 0, sizeof(message));
-    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    req = &(message.dataModeRequest);
-    req->enableBodyMotion = 1;
-    req->inhibitPowerManager = 1;
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(id)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        req2 = &message.dataModeControlV2Request;
+        req2->packetSelect = 2;
+        req2->modeAndStatus |= 0 << 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        req = &(message.dataModeRequest);
+        req->enableBodyMotion = 1;
+        req->inhibitPowerManager = 1;
+    }
     rc = freespace_sendMessageAsync(id, &message, 1000, NULL, NULL);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
@@ -216,8 +224,13 @@ static void cleanupDevice(FreespaceDeviceId id) {
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("%d> Sending message to enable mouse motion data.\n", id);
     memset(&message, 0, sizeof(message));
-    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    message.dataModeRequest.enableMouseMovement = 1;
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(id)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        message.dataModeControlV2Request.packetSelect = 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        message.dataModeRequest.enableMouseMovement = 1;
+    }
 
     rc = freespace_sendMessage(id, &message);
     if (rc != FREESPACE_SUCCESS) {

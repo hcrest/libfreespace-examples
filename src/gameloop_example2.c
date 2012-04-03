@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,15 @@
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifdef WIN32
+#include "win32/stdafx.h"
+#include <windows.h>
+#include <stdio.h>
+#else
 #include <unistd.h>
+#endif
+
 
 #include <freespace/freespace.h>
 #include "appControlHandler.h"
@@ -44,16 +52,16 @@
 struct freespace_BodyFrame cachedBodyFrame;
 
 static void receiveMessageCallback(FreespaceDeviceId id,
-                            struct freespace_message* m,
+                            struct freespace_message* message,
                             void* cookie,
                             int result) {
-    if (result == FREESPACE_SUCCESS && m != NULL && m->messageType == FREESPACE_MESSAGE_BODYFRAME) {
-        cachedBodyFrame = m->bodyFrame;
+    if (result == FREESPACE_SUCCESS && message != NULL && message->messageType == FREESPACE_MESSAGE_BODYFRAME) {
+        cachedBodyFrame = message->bodyFrame;
     }
 }
 
 static FreespaceDeviceId initializeFreespace() {
-    struct freespace_message m;
+    struct freespace_message message;
     FreespaceDeviceId device;
     int numIds;
     int rc;
@@ -87,11 +95,17 @@ static FreespaceDeviceId initializeFreespace() {
 
     memset(&cachedBodyFrame, 0, sizeof(cachedBodyFrame));
 
-    memset(&m, 0, sizeof(m));
-    m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    m.dataModeRequest.enableBodyMotion = 1;
-    m.dataModeRequest.inhibitPowerManager = 1;
-    rc = freespace_sendMessage(device, &m);
+    memset(&message, 0, sizeof(message));
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(device)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        message.dataModeControlV2Request.packetSelect = 2;
+        message.dataModeControlV2Request.modeAndStatus |= 0 << 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        message.dataModeRequest.enableBodyMotion = 1;
+        message.dataModeRequest.inhibitPowerManager = 1;
+    }
+    rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
@@ -101,15 +115,20 @@ static FreespaceDeviceId initializeFreespace() {
 }
 
 static void finalizeFreespace(FreespaceDeviceId device) {
-    struct freespace_message m;
+    struct freespace_message message;
     int rc;
 
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("\n\nfreespaceInputThread: Cleaning up...\n");
-    memset(&m, 0, sizeof(m));
-    m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    m.dataModeRequest.enableMouseMovement = 1;
-    rc = freespace_sendMessage(device, &m);
+    memset(&message, 0, sizeof(message));
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(device)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        message.dataModeControlV2Request.packetSelect = 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        message.dataModeRequest.enableMouseMovement = 1;
+    }
+    rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
@@ -149,7 +168,11 @@ int main(int argc, char* argv[]) {
         fflush(stdout);
 
         // Wait for "vsync"
+#ifdef WIN32
+        Sleep(1);
+#else
         usleep(16000);
+#endif
     }
 
     finalizeFreespace(device);

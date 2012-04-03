@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifdef _WIN32
-#include "stdafx.h"
+#include "win32/stdafx.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/timeb.h>
@@ -217,7 +217,7 @@ int timer_step() {
 static int sendMessageEachLoop = 0;
 
 static void receiveStructCallback(FreespaceDeviceId id,
-                                  struct freespace_message* m,
+                                  struct freespace_message* message,
                                   void* cookie,
                                   int result) {
     int idx;
@@ -229,16 +229,16 @@ static void receiveStructCallback(FreespaceDeviceId id,
             if (result != FREESPACE_SUCCESS) {
                 devices[idx].msgReadError++;
             }
-            if (m == 0) {
+            if (message == 0) {
                 break;
             }
-            if (m->messageType == FREESPACE_MESSAGE_BODYFRAME) {	          
-                if (devices[idx].sequenceNumber + 1 != m->bodyFrame.sequenceNumber && devices[idx].sequenceNumber != 0) {
-                    devices[idx].lostPackets = m->bodyFrame.sequenceNumber - devices[idx].sequenceNumber;
+            if (message->messageType == FREESPACE_MESSAGE_BODYFRAME) {	          
+                if (devices[idx].sequenceNumber + 1 != message->bodyFrame.sequenceNumber && devices[idx].sequenceNumber != 0) {
+                    devices[idx].lostPackets = message->bodyFrame.sequenceNumber - devices[idx].sequenceNumber;
                 }
-                devices[idx].sequenceNumber = m->bodyFrame.sequenceNumber;
+                devices[idx].sequenceNumber = message->bodyFrame.sequenceNumber;
             } else if (devices[idx].sequenceNumber == 0) {
-                freespace_printMessage(stdout, m);
+                freespace_printMessage(stdout, message);
             }
             break;
         }
@@ -313,9 +313,15 @@ static void initDevice(FreespaceDeviceId id) {
     }
 
     memset(&message, 0, sizeof(message));
-    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    message.dataModeRequest.enableBodyMotion = 1;
-    message.dataModeRequest.inhibitPowerManager = 1;
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(id)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        message.dataModeControlV2Request.packetSelect = 2;
+        message.dataModeControlV2Request.modeAndStatus |= 0 << 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        message.dataModeRequest.enableBodyMotion = 1;
+        message.dataModeRequest.inhibitPowerManager = 1;
+    }
 
     rc = freespace_sendMessageAsync(id, &message, 1000, sendCallback, NULL);
     if (rc != FREESPACE_SUCCESS) {
@@ -340,8 +346,13 @@ static void cleanupDevice(FreespaceDeviceId id) {
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("%d> Sending message to enable mouse motion data.\n", id);
     memset(&message, 0, sizeof(message));
-    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    message.dataModeRequest.enableMouseMovement = 1;
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(id)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        message.dataModeControlV2Request.packetSelect = 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        message.dataModeRequest.enableMouseMovement = 1;
+    }
     rc = freespace_sendMessage(id, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);

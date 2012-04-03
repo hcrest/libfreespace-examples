@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifdef _WIN32
-#include "stdafx.h"
+#include "win32/stdafx.h"
 #include <windows.h>
 #include <stdio.h>
 #else
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     rc = freespace_init();
     if (rc != FREESPACE_SUCCESS) {
         printf("Initialization error. rc=%d\n", rc);
-	return 1;
+        return 1;
     }
 
     // Set the callback to catch the initial devices.

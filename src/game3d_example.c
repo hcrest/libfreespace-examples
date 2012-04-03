@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,11 +43,20 @@
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
-#include <pthread.h>
+
+
+#ifdef WIN32
+#include <windows.h>
+#include "win32/pthread_win32.h"
+
+#define M_PI    3.141592654
+#else
 #include <unistd.h>
+#include <pthread.h>
+#endif
 
 #define RADIANS_TO_DEGREES(rad) ((float) rad * (float) (180.0 / M_PI))
-#define DEGREES_TO_RADIANS(deg) ((floag) deg * (float) (M_PI / 180.0))
+#define DEGREES_TO_RADIANS(deg) ((float) deg * (float) (M_PI / 180.0))
 
 struct InputLoopState {
     pthread_t thread_;
@@ -107,7 +116,7 @@ static void getEulerAnglesFromUserFrame(const struct freespace_UserFrame* user,
 
 static void* inputThreadFunction(void* arg) {
     struct InputLoopState* state = (struct InputLoopState*) arg;
-    struct freespace_message m;
+    struct freespace_message message;
     FreespaceDeviceId device;
     int numIds;
     int rc;
@@ -138,11 +147,17 @@ static void* inputThreadFunction(void* arg) {
         exit(1);
     }
 
-    memset(&m, 0, sizeof(m));
-    m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    m.dataModeRequest.enableUserPosition = 1;
-    m.dataModeRequest.inhibitPowerManager = 1;
-    rc = freespace_sendMessage(device, &m);
+    memset(&message, 0, sizeof(message));
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(device)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        message.dataModeControlV2Request.packetSelect = 3;
+        message.dataModeControlV2Request.modeAndStatus |= 0 << 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        message.dataModeRequest.enableUserPosition = 1;
+        message.dataModeRequest.inhibitPowerManager = 1;
+    }
+    rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
@@ -150,43 +165,47 @@ static void* inputThreadFunction(void* arg) {
 
     state->initialized_ = 1;
     while (!state->quit_) {
-        rc = freespace_readMessage(device, &m, 1000 /* 1 second timeout */);
+        rc = freespace_readMessage(device, &message, 1000 /* 1 second timeout */);
         if (rc == FREESPACE_ERROR_TIMEOUT ||
             rc == FREESPACE_ERROR_INTERRUPTED) {
             continue;
         }
         if (rc != FREESPACE_SUCCESS) {
             printf("freespaceInputThread: Error reading: %d. Trying again after a second...\n", rc);
+#ifdef WIN32
+            Sleep(1);
+#else
             sleep(1);
+#endif
             continue;
         }
 
         // Check if this is a user frame message.
-        if (m.messageType == FREESPACE_MESSAGE_USERFRAME) {
+        if (message.messageType == FREESPACE_MESSAGE_USERFRAME) {
             pthread_mutex_lock(&state->lock_);
 
             // Update state fields.
-            state->user_.button1 = m.userFrame.button1;
-            state->user_.button2 = m.userFrame.button2;
-            state->user_.button3 = m.userFrame.button3;
-            state->user_.button4 = m.userFrame.button4;
-            state->user_.button5 = m.userFrame.button5;
+            state->user_.button1 = message.userFrame.button1;
+            state->user_.button2 = message.userFrame.button2;
+            state->user_.button3 = message.userFrame.button3;
+            state->user_.button4 = message.userFrame.button4;
+            state->user_.button5 = message.userFrame.button5;
 
-            state->user_.sequenceNumber = m.userFrame.sequenceNumber;
+            state->user_.sequenceNumber = message.userFrame.sequenceNumber;
 
-            state->user_.linearPosX = m.userFrame.linearPosX;
-            state->user_.linearPosY = m.userFrame.linearPosY;
-            state->user_.linearPosZ = m.userFrame.linearPosZ;
+            state->user_.linearPosX = message.userFrame.linearPosX;
+            state->user_.linearPosY = message.userFrame.linearPosY;
+            state->user_.linearPosZ = message.userFrame.linearPosZ;
 
-            state->user_.angularPosA = m.userFrame.angularPosA;
-            state->user_.angularPosB = m.userFrame.angularPosB;
-            state->user_.angularPosC = m.userFrame.angularPosC;
-            state->user_.angularPosD = m.userFrame.angularPosD;
+            state->user_.angularPosA = message.userFrame.angularPosA;
+            state->user_.angularPosB = message.userFrame.angularPosB;
+            state->user_.angularPosC = message.userFrame.angularPosC;
+            state->user_.angularPosD = message.userFrame.angularPosD;
 
             // Update accumulation fields
-            state->user_.deltaX += m.userFrame.deltaX;
-            state->user_.deltaY += m.userFrame.deltaY;
-            state->user_.deltaWheel += m.userFrame.deltaWheel;
+            state->user_.deltaX += message.userFrame.deltaX;
+            state->user_.deltaY += message.userFrame.deltaY;
+            state->user_.deltaWheel += message.userFrame.deltaWheel;
 
             pthread_mutex_unlock(&state->lock_);
         }
@@ -194,10 +213,15 @@ static void* inputThreadFunction(void* arg) {
 
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("\n\nfreespaceInputThread: Cleaning up...\n");
-    memset(&m, 0, sizeof(m));
-    m.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    m.dataModeRequest.enableMouseMovement = 1;
-    rc = freespace_sendMessage(device, &m);
+    memset(&message, 0, sizeof(message));
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(device)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        message.dataModeControlV2Request.packetSelect = 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        message.dataModeRequest.enableMouseMovement = 1;
+    }
+    rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);
     }
@@ -240,7 +264,11 @@ int main(int argc, char* argv[]) {
         fflush(stdout);
 
         // Wait for "vsync"
+#ifdef WIN32
+        Sleep(1);
+#else
         usleep(16000);
+#endif
     }
 
 

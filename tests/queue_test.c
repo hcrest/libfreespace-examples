@@ -4,11 +4,20 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <freespace/freespace.h>
 #include <freespace/freespace_codecs.h>
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
+
+#ifdef WIN32
+#include "win32/stdafx.h"
+#include <windows.h>
+#include <stdio.h>
+#else
+#include <sys/time.h>
+#include <unistd.h>
+#endif
+
 
 static int errorExit(const char* message, int rc) {
     printf("%s : %d\n", message, rc);
@@ -414,7 +423,12 @@ int main(int argc, char** argv) {
 
 	//sleep and send the control message if we need to
 	//we'll only send them at most once every 50ms
-	usleep(sleepUsec);
+#ifdef WIN32
+    Sleep(1);
+#else
+    usleep(sleepUsec);
+#endif
+
 	gettimeofday(&currTime, NULL);
 	if (enableControl && numControlMessagesOutstanding < (9 * expectedResponsesPerRequest)) {	    
 	    long secDiff = currTime.tv_sec - lastControlSendTime.tv_sec;

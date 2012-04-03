@@ -17,12 +17,21 @@
 #include <signal.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include <sys/time.h>
 #include <freespace/freespace.h>
 #include <freespace/freespace_codecs.h>
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
+
+#ifdef WIN32
+#include "win32/stdafx.h"
+#include <windows.h>
+#include <stdio.h>
+#else
+#include <sys/time.h>
+#include <pthread.h>
 #include <unistd.h>
+#endif
+
 
 //close freespace and the device
 static int cleanupAndCloseDevice(FreespaceDeviceId device) {
@@ -128,8 +137,12 @@ static int flushMouse(char* mouseToCat) {
     } else if (catPid > 0) {
         //parent
         printf("Parent sleeping for 5 seconds before killing child\n");
-	usleep(5000000);
-	kill(catPid, SIGINT);
+#ifdef WIN32
+    Sleep(5);
+#else
+    usleep(5000000);
+    kill(catPid, SIGINT);
+#endif
 	if (fd != -1) {
 	    close(fd);
 	}
@@ -217,7 +230,11 @@ int main(int argc, char** argv) {
         
     printf("****\nOK! Please release the button.. you have 5 seconds\n");
     printf("Please keep moving the mouse until the test exits (or tells you to)\n");
+#ifdef WIN32
+    Sleep(5);
+#else
     usleep(5000000);
+#endif
 
     //open it again
     rc = initFreeSpaceAndOpenDevice(&device);

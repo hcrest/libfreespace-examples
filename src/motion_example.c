@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifdef _WIN32
-#include "stdafx.h"
+#include "win32/stdafx.h"
 #include <stdio.h>
 #else
 #include <stdlib.h>
@@ -50,6 +50,7 @@
 int main(int argc, char* argv[]) {
     struct freespace_message message;
     struct freespace_DataModeRequest * req;
+    struct freespace_DataModeControlV2Request * req2;
     FreespaceDeviceId device;
     struct FreespaceDeviceInfo info;
     int numIds;
@@ -63,7 +64,7 @@ int main(int argc, char* argv[]) {
     rc = freespace_init();
     if (rc != FREESPACE_SUCCESS) {
         printf("Initialization error. rc=%d\n", rc);
-	return 1;
+	    return 1;
     }
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
@@ -84,6 +85,10 @@ int main(int argc, char* argv[]) {
     // Display the device information.
     printDeviceInfo(device);
 
+    printf("This device%s support%s DataModeControlV2Request.\n",
+           (FREESPACE_SUCCESS == freespace_isNewDevice(device))?"":" does not",
+           (FREESPACE_SUCCESS == freespace_isNewDevice(device))?"s":"");
+
     // Cache device information
     freespace_getDeviceInfo(device, &info);
 
@@ -95,10 +100,19 @@ int main(int argc, char* argv[]) {
 
     printf("Sending message to enable body-frame motion data.\n");
     memset(&message, 0, sizeof(message));
-    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    req = &message.dataModeRequest;
-    req->enableBodyMotion = 1;
-    req->inhibitPowerManager = 1;
+
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(device)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        req2 = &message.dataModeControlV2Request;
+        req2->packetSelect = 2;
+        req2->modeAndStatus |= 0 << 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        req = &message.dataModeRequest;
+        req->enableBodyMotion = 1;
+        req->inhibitPowerManager = 1;
+    }
+
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
@@ -128,8 +142,13 @@ int main(int argc, char* argv[]) {
     /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
     printf("Sending message to enable mouse motion data.\n");
     memset(&message, 0, sizeof(message));
-    message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-    req->enableMouseMovement = 1;
+    if (FREESPACE_SUCCESS == freespace_isNewDevice(device)) {
+        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+        req2->packetSelect = 1;
+    } else {
+        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
+        req->enableMouseMovement = 1;
+    }
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);

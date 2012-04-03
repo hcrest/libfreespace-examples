@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2010, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef WIN32
-#include "stdafx.h"
+#include "win32/stdafx.h"
 #include <windows.h>
 #include <stdio.h>
 #else
@@ -50,20 +50,19 @@
 #define BUFFER_LENGTH 1024
 
 static void receiveMessageCallback(FreespaceDeviceId id,
-                                   struct freespace_message* m,
+                                   struct freespace_message* message,
                                    void* cookie,
                                    int result) {
     int rc;
     struct FreespaceDeviceInfo info;
-
-    if (result == FREESPACE_SUCCESS && m != NULL) {
-        if (m->messageType == FREESPACE_MESSAGE_PRODUCTIDRESPONSE) {
+    struct freespace_ProductIDResponse* pr = &(message->productIDResponse);
+    
+    if (result == FREESPACE_SUCCESS && message != NULL) {
+        if (message->messageType == FREESPACE_MESSAGE_PRODUCTIDRESPONSE) {
             rc = freespace_getDeviceInfo(id, &info);
             if (rc != FREESPACE_SUCCESS) {
                 return;
             }
-
-            struct freespace_ProductIDResponse* pr = &(m->productIDResponse);
 
             if (pr->deviceClass == 1) {
                 // Print out information including software version
@@ -95,7 +94,7 @@ void hotplugCallback(enum freespace_hotplugEvent event,
                      FreespaceDeviceId id,
                      void* cookie) {
     int rc;
-    struct freespace_message m;
+    struct freespace_message message;
     struct FreespaceDeviceInfo info;
 
     if (event == FREESPACE_HOTPLUG_INSERTION) {
@@ -108,12 +107,12 @@ void hotplugCallback(enum freespace_hotplugEvent event,
         freespace_setReceiveMessageCallback(id, receiveMessageCallback, NULL);
         rc = freespace_getDeviceInfo(id, &info);
 
-        memset(&m, 0, sizeof(m));
-        m.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
-        rc = freespace_sendMessage(id, &m);
+        memset(&message, 0, sizeof(message));
+        message.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
+        rc = freespace_sendMessage(id, &message);
         if (rc == FREESPACE_SUCCESS && info.hVer == 2) {
-            m.dest = 1;
-            rc = freespace_sendMessage(id, &m);
+            message.dest = 1;
+            rc = freespace_sendMessage(id, &message);
         }
         if (rc != FREESPACE_SUCCESS) {
             printf("Error sending productID request\n");
@@ -131,7 +130,11 @@ int main(int argc, char* argv[]) {
     addControlHandler();
 
     // Initialize the freespace library
-    freespace_init();
+    rc = freespace_init();
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Initialization error. rc=%d\n", rc);
+        return 1;
+    }
 
     // Set the callback to catch the initial devices.
     printf("Detecting the Freespace devices already connected...\n");
