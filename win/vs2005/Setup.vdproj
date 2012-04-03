@@ -21,13 +21,43 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_263AEA07D412493CAC11CF320288D3DC"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_2BADF99FFE1141F6ADB10ED4618CD1B2"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
+        "MsmKey" = "8:_44A1969156E44626AA794BB5582FD0A8"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_49D301AE396442B99696EDBF595082D3"
+        "OwnerKey" = "8:_5CE60AF9E0AA46C3B6D217ACECE19175"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_4A3A5601B9804BC8A1DC109CA5374403"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_568AD8E011654FACB3BBAF47793948D6"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_5A5ECA464E4D4DE69F111FEB883A9599"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -39,38 +69,8 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
-        "OwnerKey" = "8:_1630DB642BD34B459EF9A71CE5F2C2AC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
-        "OwnerKey" = "8:_826E20FA21A74A7CB110C840ACEAA780"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
-        "OwnerKey" = "8:_7E89477D287243B69B2994E73959E6C8"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
-        "OwnerKey" = "8:_5CE60AF9E0AA46C3B6D217ACECE19175"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
-        "OwnerKey" = "8:_4A3A5601B9804BC8A1DC109CA5374403"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
-        "OwnerKey" = "8:_2BADF99FFE1141F6ADB10ED4618CD1B2"
+        "MsmKey" = "8:_70E611F8372549C59FDE312114F407A3"
+        "OwnerKey" = "8:_49D301AE396442B99696EDBF595082D3"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -93,14 +93,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_D9BB2B9DCF3119D1914DB8532E81BCD1"
-        "OwnerKey" = "8:_5CE60AF9E0AA46C3B6D217ACECE19175"
+        "MsmKey" = "8:_CF64B0D6A9384941A21F9CC9646C7198"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_F8F7324778734302812D02CB7231AB1E"
-        "OwnerKey" = "8:_670F18DC0DCE44429DC77F03AA08760D"
+        "MsmKey" = "8:_D9BB2B9DCF3119D1914DB8532E81BCD1"
+        "OwnerKey" = "8:_5CE60AF9E0AA46C3B6D217ACECE19175"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -117,7 +117,7 @@
         "DisplayName" = "8:Debug"
         "IsDebugOnly" = "11:TRUE"
         "IsReleaseOnly" = "11:FALSE"
-        "OutputFilename" = "8:Debug\\Setup.msi"
+        "OutputFilename" = "8:Release\\Setup.msi"
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
@@ -209,6 +209,26 @@
             "Register" = "3:1"
             "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_CF64B0D6A9384941A21F9CC9646C7198"
+            {
+            "SourcePath" = "8:..\\..\\lib\\pthreadVSE2.dll"
+            "TargetName" = "8:pthreadVSE2.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D9BB2B9DCF3119D1914DB8532E81BCD1"
@@ -872,11 +892,11 @@
         }
         "MergeModule"
         {
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_670F18DC0DCE44429DC77F03AA08760D"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_49D301AE396442B99696EDBF595082D3"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"
-            "SourcePath" = "8:Microsoft_VC80_CRT_x86.msm"
+            "SourcePath" = "8:Microsoft_VC80_DebugCRT_x86.msm"
                 "Properties"
                 {
                 }
@@ -886,11 +906,11 @@
             "Feature" = "8:"
             "IsolateTo" = "8:"
             }
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_F8F7324778734302812D02CB7231AB1E"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_70E611F8372549C59FDE312114F407A3"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"
-            "SourcePath" = "8:policy_8_0_microsoft_vc80_crt_x86.msm"
+            "SourcePath" = "8:policy_8_0_microsoft_vc80_debugcrt_x86.msm"
                 "Properties"
                 {
                 }
@@ -905,7 +925,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_1630DB642BD34B459EF9A71CE5F2C2AC"
             {
-            "SourcePath" = "8:Release\\discovery_example.exe"
+            "SourcePath" = "8:debug\\discovery_example.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -931,9 +951,37 @@
                 {
                 }
             }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_263AEA07D412493CAC11CF320288D3DC"
+            {
+            "SourcePath" = "8:debug\\game3d_example.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{A30DC002-29BC-4539-B134-BD0D3737F579}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_2BADF99FFE1141F6ADB10ED4618CD1B2"
             {
-            "SourcePath" = "8:Release\\multiple_device_example.exe"
+            "SourcePath" = "8:debug\\multiple_device_example.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -959,9 +1007,37 @@
                 {
                 }
             }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_44A1969156E44626AA794BB5582FD0A8"
+            {
+            "SourcePath" = "8:debug\\firmware_version_example.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{7061793D-C16A-4D2D-A5ED-25A0D9BEF31C}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_4A3A5601B9804BC8A1DC109CA5374403"
             {
-            "SourcePath" = "8:Release\\motion_example_async.exe"
+            "SourcePath" = "8:debug\\motion_example_async.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -987,9 +1063,65 @@
                 {
                 }
             }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_568AD8E011654FACB3BBAF47793948D6"
+            {
+            "SourcePath" = "8:debug\\gameloop_example.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{4EB5EC46-F05C-4AE5-A83F-7D52F0E4819F}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_5A5ECA464E4D4DE69F111FEB883A9599"
+            {
+            "SourcePath" = "8:debug\\gameloop_example2.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{D5BABAEE-EC61-4C19-91EC-3E124DD8E994}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_5CE60AF9E0AA46C3B6D217ACECE19175"
             {
-            "SourcePath" = "8:Release\\libfreespace.dll"
+            "SourcePath" = "8:debug\\libfreespace.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -1017,7 +1149,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_7E89477D287243B69B2994E73959E6C8"
             {
-            "SourcePath" = "8:Release\\communication_example.exe"
+            "SourcePath" = "8:debug\\communication_example.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
@@ -1045,7 +1177,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_826E20FA21A74A7CB110C840ACEAA780"
             {
-            "SourcePath" = "8:Release\\motion_example.exe"
+            "SourcePath" = "8:debug\\motion_example.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_03937489285B4D63AB8E9315A047566D"
