@@ -9,7 +9,11 @@ Building
 ========
 
 Use Visual Studio.
-To build the distribution MSI, run "winbuild.bat" from the VS command line.
+
+In Tool->Options menu expand 'Projects and Solutions', select 'Build and Run',
+and set 'maximum number of parallel project builds' to 1.
+
+To build the distribution MSI, run "winbuild.bat" from the command line.
 
 Troubleshooting
 ===============

@@ -10,9 +10,11 @@ Building
 
 Before building, ensure that the libfreespace libraries are installed.
 
-If building on the target machine, the process is as simple as
-running:
+Make sure autoreconf is installed.
 
+If building on the target machine, the process is as simple as running:
+
+./autogen.sh
 ./configure
 make
 
