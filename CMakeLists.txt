@@ -8,6 +8,10 @@ set (PROJECT_VERSION_PATCH 0)
 ### TODO import these if they are installed
 add_subdirectory(../libfreespace libfreespace)
 set(LIBFREESPACE_LIBS freespace m pthread)
+set(LIBFREESPACE_INCLUDES ${PROJECT_SOURCE_DIR}/../libfreespace/include ${PROJECT_BINARY_DIR}/libfreespace/include)
+#####
+
+include_directories(${LIBFREESPACE_INCLUDES})
 
 set(APP_CTRL_SRCS src/appControlHandler.c src/appControlHandler.h)
 set(MATH_SRCS src/math/quaternion.c src/math/quaternion.h src/math/vec3.h)
