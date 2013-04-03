@@ -45,17 +45,24 @@
 #include "appControlHandler.h"
 #include <string.h>
 
+// Limit on how many times to try to get a response
+#define RETRY_COUNT_LIMIT 100
+
 int main(int argc, char* argv[]) {
-    FreespaceDeviceId device;
-    struct freespace_message send;
-    struct freespace_BatteryLevelRequest * batt;
-    struct freespace_message receive;
-    int numIds;
-    int rc;
+    FreespaceDeviceId device;                       // Keep track of the device you are talking to
+    struct freespace_message send;                  // A place to create messages to send to the device
+    struct freespace_message receive;               // A place to put a message received from the device
+    int numIds;                                     // Keep track of how many devices are available
+    int rc;                                         // Return Code
+    int retryCount = 0;                             // How many times tried so far to get a response
+
+    // Flag to indicate that the application should quit
+    // Set by the control signal handler
+    int quit = 0;
 
     printVersionInfo(argv[0]);
 
-    addControlHandler();
+    addControlHandler(&quit);
 
     // Initialize the freespace library
     rc = freespace_init();
@@ -65,6 +72,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Scanning for Freespace devices...\n");
+    // Get the ID of the first device in the list of availble devices
     rc = freespace_getDeviceList(&device, 1, &numIds);
     if (numIds == 0) {
         printf("Didn't find any devices.\n");
@@ -72,6 +80,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Found a device. Trying to open it...\n");
+    // Prepare to communicate with the device found above
     rc = freespace_openDevice(device);
     if (rc != FREESPACE_SUCCESS) {
         printf("Error opening device: %d\n", rc);
@@ -81,6 +90,7 @@ int main(int argc, char* argv[]) {
     // Display the device information.
     printDeviceInfo(device);
 
+    // Make sure any old messages are cleared out of the system
     rc = freespace_flush(device);
     if (rc != FREESPACE_SUCCESS) {
         printf("Error flushing device: %d\n", rc);
@@ -88,26 +98,36 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Requesting battery level messages.\n");
-    send.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST;
-    batt = &(send.batteryLevelRequest);
-    while (!quit) {
-        // Send a battery level request message.
-        rc = freespace_sendMessage(device, &send);
-        if (rc != FREESPACE_SUCCESS) {
-            printf("Could not send message: %d.\n", rc);
-        }
 
-        // Read the battery level response message (hopefully).
-        rc = freespace_readMessage(device, &receive, 100);
-        if (rc == FREESPACE_SUCCESS) {
-            freespace_printMessage(stdout, &receive);
-        } else if (rc == FREESPACE_ERROR_TIMEOUT) {
-            printf("<timeout>  Try moving the Loop/FRCM to wake it up.\n");
-        } else if (rc == FREESPACE_ERROR_INTERRUPTED) {
-            printf("<interrupted>\n");
+    memset(&send, 0, sizeof(send)); // Start with a clean message struct
+    send.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST;
+
+    while (!quit) {
+        if (retryCount < RETRY_COUNT_LIMIT) {
+            retryCount++;
+            // Send a battery level request message.
+            rc = freespace_sendMessage(device, &send);
+            if (rc != FREESPACE_SUCCESS) {
+                printf("Could not send message: %d.\n", rc);
+            }
+
+            // Read the battery level response message (hopefully).
+            rc = freespace_readMessage(device, &receive, 100);
+            if (rc == FREESPACE_SUCCESS) {
+                // Print the received message
+                freespace_printMessage(stdout, &receive);
+                retryCount = 0;
+            } else if (rc == FREESPACE_ERROR_TIMEOUT) {
+                printf("<timeout>  Try moving the Loop/FRCM to wake it up.\n");
+            } else if (rc == FREESPACE_ERROR_INTERRUPTED) {
+                printf("<interrupted>\n");
+            } else {
+                printf("Error reading: %d. Quitting...\n", rc);
+                break;
+            }
         } else {
-            printf("Error reading: %d. Quitting...\n", rc);
-            break;
+            printf("Did not receive response after %d trials\n", RETRY_COUNT_LIMIT);
+            quit = 1;
         }
     }
 

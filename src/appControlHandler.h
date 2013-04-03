@@ -41,8 +41,7 @@
 extern "C" {
 #endif
 
-extern int quit;
-void addControlHandler();
+void addControlHandler(int * quit);
 int printDeviceInfo(FreespaceDeviceId id);
 void printVersionInfo(const char* appname);
 
