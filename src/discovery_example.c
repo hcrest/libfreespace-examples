@@ -47,6 +47,13 @@
 
 #define BUFFER_LENGTH 1024
 
+// Cross platform sleep macro
+#ifdef _WIN32
+#define SLEEP    Sleep(100)
+#else
+#define SLEEP    sleep(1)
+#endif
+
 /**
  * Callback that displays the devices that have been inserted into and removed
  * from the system.
@@ -73,10 +80,14 @@ void hotplugCallback(enum freespace_hotplugEvent event,
 
 int main(int argc, char* argv[]) {
     int rc;
+    
+    // Flag to indicate that the application should quit
+    // Set by the control signal handler
+    int quit = 0;
 
     printVersionInfo(argv[0]);
 
-    addControlHandler();
+    addControlHandler(&quit);
 
     // Initialize the freespace library
     rc = freespace_init();
@@ -86,7 +97,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Set the callback to catch the initial devices.
-    printf("Detecting the Freespace devices already connected...\n");
+//    printf("Detecting the Freespace devices already connected...\n");
     freespace_setDeviceHotplugCallback(hotplugCallback, NULL);
 
     printf("Waiting for Freespace devices to be inserted or removed...\n");
@@ -94,11 +105,7 @@ int main(int argc, char* argv[]) {
     while (!quit) {
         // Easy event loop - just poll freespace_perform periodically
         // rather than waiting on select or WaitForMultipleObjects
-#ifdef _WIN32
-        Sleep(100);
-#else
-        sleep(1);
-#endif
+        SLEEP;
 
         // Callbacks are called from within the perform call.
         freespace_perform();

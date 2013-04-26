@@ -118,7 +118,7 @@ void addControlHandler(int * quit) {
 static void sighandler(int num) {
     *quitPtr = 1;
 }
-void addControlHandler() {
+void addControlHandler(int * quit) {
     // Set up the signal handler to catch
     // CTRL-C and clean up gracefully.
     struct sigaction setmask;

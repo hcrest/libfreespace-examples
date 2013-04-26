@@ -48,6 +48,9 @@
 // Limit on how many times to try to get a response
 #define RETRY_COUNT_LIMIT 100
 
+/**
+ * main
+ */
 int main(int argc, char* argv[]) {
     FreespaceDeviceId device;                       // Keep track of the device you are talking to
     struct freespace_message send;                  // A place to create messages to send to the device
