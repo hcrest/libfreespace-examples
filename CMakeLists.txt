@@ -30,9 +30,6 @@ target_link_libraries(motion_example_async ${LIBFREESPACE_LIBRARIES})
 add_executable(communication_example src/communication_example.c ${APP_CTRL_SRCS})
 target_link_libraries(communication_example ${LIBFREESPACE_LIBRARIES})
 
-add_executable(discovery_example src/discovery_example.c ${APP_CTRL_SRCS})
-target_link_libraries(discovery_example ${LIBFREESPACE_LIBRARIES})
-
 add_executable(multiple_device_example src/multiple_device_example.c ${APP_CTRL_SRCS})
 target_link_libraries(multiple_device_example ${LIBFREESPACE_LIBRARIES})
 
