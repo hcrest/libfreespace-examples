@@ -170,6 +170,8 @@ int main(int argc, char* argv[]) {
     // Set by the control signal handler
     int quit = 0;
 
+    printVersionInfo(argv[0]);
+
     addControlHandler(&quit);
 
     // Initialize the freespace library
