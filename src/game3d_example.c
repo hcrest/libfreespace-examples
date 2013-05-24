@@ -33,6 +33,7 @@
  */
 
 #include <freespace/freespace.h>
+#include <freespace/freespace_util.h>
 #include "appControlHandler.h"
 
 #include <math.h>
@@ -96,6 +97,7 @@ int main(int argc, char* argv[]) {
     struct InputLoopState inputLoop;
     struct freespace_MotionEngineOutput meOut;
     struct Vec3f eulerAngles;
+    struct MultiAxisSensor accel;
     int rc;
 
     // Flag to indicate that the application should quit
@@ -128,13 +130,17 @@ int main(int argc, char* argv[]) {
         if (rc) {
             // Run game logic.
             getEulerAnglesFromMotion(&meOut, &eulerAngles);
+            freespace_util_getAcceleration(&meOut, &accel);
 
             // Render.
-            printf("%d: roll: %0.4f, pitch: %0.4f, yaw: %0.4f\n",
+            printf("%d: roll: %0.4f, pitch: %0.4f, yaw: %0.4f\taccel\tx: %0.4f, y: %0.4f, z: %0.4f\n",
                    meOut.sequenceNumber,
                    RADIANS_TO_DEGREES(eulerAngles.x),
                    RADIANS_TO_DEGREES(eulerAngles.y),
-                   RADIANS_TO_DEGREES(eulerAngles.z));
+                   RADIANS_TO_DEGREES(eulerAngles.z),
+                   accel.x,
+                   accel.y,
+                   accel.z);
             fflush(stdout);
         }
 
@@ -244,6 +250,7 @@ static void* inputThreadFunction(void* arg) {
     message.dataModeControlV2Request.packetSelect = 8;        // MEOut
     message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
     message.dataModeControlV2Request.formatSelect = 0;        // MEOut format 0
+    message.dataModeControlV2Request.ff1 = 1;                 // Acceleration fields
     message.dataModeControlV2Request.ff6 = 1;                 // Angular (orientation) fields
     
     rc = freespace_sendMessage(device, &message);
