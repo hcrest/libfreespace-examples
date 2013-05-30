@@ -160,6 +160,11 @@ void hotplugCallback(enum freespace_hotplugEvent event,
 
 /**
  * main
+ * This example uses the asynchronous API to
+ *  - detect removal or additon of devices
+ *  - get the product ID information from added devices
+ * Devices may or may not be connected when this example is launched
+ * Devices may be add/removed (pugged/unplugged) while this example is running.
  */
 int main(int argc, char* argv[]) {
     int numIds;
