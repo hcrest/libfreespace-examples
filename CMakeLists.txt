@@ -33,19 +33,13 @@ target_link_libraries(communication_example ${LIBFREESPACE_LIBRARIES})
 add_executable(multiple_device_example src/multiple_device_example.c ${APP_CTRL_SRCS})
 target_link_libraries(multiple_device_example ${LIBFREESPACE_LIBRARIES})
 
-add_executable(gameloop_example src/gameloop_example.c ${APP_CTRL_SRCS})
-target_link_libraries(gameloop_example ${LIBFREESPACE_LIBRARIES} ${pthread_lib_name})
-
-add_executable(gameloop_example2 src/gameloop_example2.c ${APP_CTRL_SRCS})
-target_link_libraries(gameloop_example2 ${LIBFREESPACE_LIBRARIES})
-
 add_executable(game3d_example src/game3d_example.c ${APP_CTRL_SRCS} ${MATH_SRCS})
 target_link_libraries(game3d_example ${LIBFREESPACE_LIBRARIES} ${pthread_lib_name})
 
 add_executable(firmware_version_example src/firmware_version_example.c ${APP_CTRL_SRCS})
 target_link_libraries(firmware_version_example ${LIBFREESPACE_LIBRARIES})
 
-if (CMAKE_COMPILER_IS_GNUCC) 
+if (CMAKE_COMPILER_IS_GNUCC)
 	add_definitions(-Wall) # TODO  should really set cflags
 endif()
 

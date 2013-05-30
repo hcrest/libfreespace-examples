@@ -41,24 +41,36 @@
 #endif
 
 #include <freespace/freespace.h>
-#include <freespace/freespace_codecs.h>
+#include <freespace/freespace_util.h>
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
 
 #include <string.h>
 
+/**
+ * main
+ * This example uses the synchronous API to
+ *  - find a device
+ *  - open the device found
+ *  - configure the device to output motion
+ *  - read motion messages sent by the device
+ * This example assume the device is already connected.
+ */
 int main(int argc, char* argv[]) {
     struct freespace_message message;
-    struct freespace_DataModeRequest * req;
-    struct freespace_DataModeControlV2Request * req2;
     FreespaceDeviceId device;
-    struct FreespaceDeviceInfo info;
-    int numIds;
-    int rc;
+    int numIds; // The number of device ID found
+    int rc; // Return code
+    struct MultiAxisSensor pointer;
+    struct MultiAxisSensor angVel;
+
+    // Flag to indicate that the application should quit
+    // Set by the control signal handler
+    int quit = 0;
 
     printVersionInfo(argv[0]);
 
-    addControlHandler();
+    addControlHandler(&quit);
 
     // Initialize the freespace library
     rc = freespace_init();
@@ -67,8 +79,8 @@ int main(int argc, char* argv[]) {
 	    return 1;
     }
 
-    /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
     printf("Scanning for Freespace devices...\n");
+     // Get the ID of the first device in the list of availble devices
     rc = freespace_getDeviceList(&device, 1, &numIds);
     if (numIds == 0) {
         printf("Didn't find any devices.\n");
@@ -76,6 +88,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Found a device. Trying to open it...\n");
+    // Prepare to communicate with the device found above
     rc = freespace_openDevice(device);
     if (rc != FREESPACE_SUCCESS) {
         printf("Error opening device: %d\n", rc);
@@ -85,41 +98,30 @@ int main(int argc, char* argv[]) {
     // Display the device information.
     printDeviceInfo(device);
 
-    printf("This device%s support%s DataModeControlV2Request.\n",
-           (FREESPACE_SUCCESS == freespace_isNewDevice(device))?"":" does not",
-           (FREESPACE_SUCCESS == freespace_isNewDevice(device))?"s":"");
-
-    // Cache device information
-    freespace_getDeviceInfo(device, &info);
-
+    // Make sure any old messages are cleared out of the system
     rc = freespace_flush(device);
     if (rc != FREESPACE_SUCCESS) {
         printf("Error flushing device: %d\n", rc);
         return 1;
     }
 
-    printf("Sending message to enable body-frame motion data.\n");
-    memset(&message, 0, sizeof(message));
+    // Configure the device for motion outputs
+    printf("Sending message to enable motion data.\n");
+    memset(&message, 0, sizeof(message)); // Make sure all the message fields are initialized to 0.
 
-    if (FREESPACE_SUCCESS == freespace_isNewDevice(device)) {
-        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-        req2 = &message.dataModeControlV2Request;
-        req2->packetSelect = 2;
-        req2->modeAndStatus |= 0 << 1;
-    } else {
-        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-        req = &message.dataModeRequest;
-        req->enableBodyMotion = 1;
-        req->inhibitPowerManager = 1;
-    }
-
+    message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+    message.dataModeControlV2Request.packetSelect = 8;        // MotionEngine Outout
+    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
+    message.dataModeControlV2Request.formatSelect = 0;        // MEOut format 0
+    message.dataModeControlV2Request.ff0 = 1;                 // Pointer fields
+    message.dataModeControlV2Request.ff3 = 1;                 // Angular velocity fields
+    
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
-    /** --- END EXAMPLE INITIALIZATION OF DEVICE -- **/
-
-
+        
+    // A loop to read messages
     printf("Listening for messages.\n");
     while (!quit) {
         rc = freespace_readMessage(device, &message, 100);
@@ -136,28 +138,32 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        freespace_printMessage(stdout, &message);
+        // freespace_printMessage(stdout, &message); // This just prints the basic message fields
+        if (message.messageType == FREESPACE_MESSAGE_MOTIONENGINEOUTPUT) {
+            rc = freespace_util_getAngularVelocity(&message.motionEngineOutput, &angVel);
+            if (rc == 0) {
+                printf ("X: % 6.2f, Y: % 6.2f, Z: % 6.2f\n", angVel.x, angVel.y, angVel.z);
+            }
+        }
     }
 
-    /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
-    printf("Sending message to enable mouse motion data.\n");
-    memset(&message, 0, sizeof(message));
-    if (FREESPACE_SUCCESS == freespace_isNewDevice(device)) {
-        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-        req2->packetSelect = 1;
-    } else {
-        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-        req->enableMouseMovement = 1;
-    }
+    // Cleanup when done and configure teh device to output mouse packets
+    printf("Sending message to enable mouse data.\n");
+    memset(&message, 0, sizeof(message)); // Init message fields to 0
+    message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+    message.dataModeControlV2Request.packetSelect = 1;        // Mouse packet
+    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
 
+    // Close communications with the device
     printf("Cleaning up...\n");
     freespace_closeDevice(device);
     /** --- END EXAMPLE FINALIZATION OF DEVICE --- **/
 
+    // Cleanup the library
     freespace_exit();
 
     return 0;
