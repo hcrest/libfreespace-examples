@@ -92,6 +92,10 @@ static void getEulerAnglesFromMotion(const struct freespace_MotionEngineOutput* 
 
 /******************************************************************************
  * main
+ * This example uses the synchronous API to access the device.
+ * It assumes the device is already connected. It uses pthreads to put the 
+ * operation of handling incoming messages from the device in a separate thread
+ * from the main thread. It configures the device to produce fused motion outputs.
  */
 int main(int argc, char* argv[]) {
     struct InputLoopState inputLoop;
