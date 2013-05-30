@@ -45,11 +45,24 @@
 #include "appControlHandler.h"
 #include <string.h>
 
+// Cross platform sleep macro
+#ifdef _WIN32
+#define SLEEP    Sleep(200)
+#else
+#define SLEEP    sleep(1)
+#endif
+
 // Limit on how many times to try to get a response
 #define RETRY_COUNT_LIMIT 100
 
 /**
  * main
+ * This example uses the synchronous API to 
+ *  - find a device
+ *  - open the device found
+ *  - send a message
+ *  - look for a response
+ * This example assumes that the device is already connected.
  */
 int main(int argc, char* argv[]) {
     FreespaceDeviceId device;                       // Keep track of the device you are talking to
@@ -103,18 +116,21 @@ int main(int argc, char* argv[]) {
     printf("Requesting battery level messages.\n");
 
     memset(&send, 0, sizeof(send)); // Start with a clean message struct
-    send.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST;
+    // Populate the message fields. Two options are shown below. Uncomment one desired
+    // and comment out the one not desired.
+    //send.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST; // To send a battery level request
+    send.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;    // To send a product ID request
 
     while (!quit) {
         if (retryCount < RETRY_COUNT_LIMIT) {
             retryCount++;
-            // Send a battery level request message.
+            // Send the message constructed above.
             rc = freespace_sendMessage(device, &send);
             if (rc != FREESPACE_SUCCESS) {
                 printf("Could not send message: %d.\n", rc);
             }
 
-            // Read the battery level response message (hopefully).
+            // Read the response message.
             rc = freespace_readMessage(device, &receive, 100);
             if (rc == FREESPACE_SUCCESS) {
                 // Print the received message
@@ -132,6 +148,7 @@ int main(int argc, char* argv[]) {
             printf("Did not receive response after %d trials\n", RETRY_COUNT_LIMIT);
             quit = 1;
         }
+        SLEEP;
     }
 
     printf("Cleaning up...\n");
