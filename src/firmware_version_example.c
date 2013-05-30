@@ -133,14 +133,14 @@ void hotplugCallback(enum freespace_hotplugEvent event,
             message.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;
             // Allow message.dest to have the default value of 0. This will cause the message
             // to go to the remote or the module
-            rc = freespace_sendMessage(id, &message);
+            rc = freespace_sendMessageAsync(id, &message, 100, NULL, 0);
             if (rc != FREESPACE_SUCCESS) {
                 printf("Error sending productID request\n");
                 return;
             }
             // To communicate with a dongle set the dest field to 1
             message.dest = 1;
-            rc = freespace_sendMessage(id, &message);
+            rc = freespace_sendMessageAsync(id, &message, 100, NULL, 0);
             if (rc != FREESPACE_SUCCESS) {
                 printf("Error sending productID request\n");
                 return;
