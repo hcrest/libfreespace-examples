@@ -101,7 +101,7 @@ static void* inputThreadFunction(void* arg) {
     rc = freespace_init();
     if (rc != FREESPACE_SUCCESS) {
         printf("Initialization error. rc=%d\n", rc);
-	exit(1);
+        exit(1);
     }
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
@@ -214,10 +214,11 @@ static void* inputThreadFunction(void* arg) {
 int main(int argc, char* argv[]) {
     struct InputLoopState inputLoop;
     struct freespace_BodyFrame body;
+    int quit;
 
     printVersionInfo(argv[0]);
 
-    addControlHandler();
+    addControlHandler(&quit);
 
     initInputThread(&inputLoop);
 

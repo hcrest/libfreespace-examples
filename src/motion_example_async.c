@@ -257,10 +257,11 @@ int main(int argc, char* argv[]) {
     FreespaceDeviceId deviceIds[FREESPACE_MAXIMUM_DEVICE_COUNT];
     int numIds;
     int rc;
+    int quit;
 
     printVersionInfo(argv[0]);
 
-    addControlHandler();
+    addControlHandler(&quit);
 
     // Initialize the freespace library
     rc = freespace_init();

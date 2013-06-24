@@ -95,7 +95,9 @@ int printDeviceInfo(FreespaceDeviceId id) {
  */
 static BOOL CtrlHandler(DWORD fdwCtrlType) {
     // All control signals are handled in the same manner
-    *quitPtr = 1;
+    if (quitPtr) {
+        *quitPtr = 1;        
+    }
     return TRUE;
 }
 
@@ -116,7 +118,9 @@ void addControlHandler(int * quit) {
 #else
 
 static void sighandler(int num) {
-    *quitPtr = 1;
+    if (quitPtr) {
+        *quitPtr = 1;        
+    }
 }
 void addControlHandler(int * quit) {
     // Set up the signal handler to catch

@@ -398,6 +398,7 @@ static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId
 int main(int argc, char* argv[]) {
     int idx;
     int rc;
+    int quit;
 
     printVersionInfo(argv[0]);
 
@@ -407,7 +408,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    addControlHandler();
+    addControlHandler(&quit);
 
     for (idx = 0; idx < MAX_NUMBER_DEVICES; idx++) {
         devices[idx].id = -1;
