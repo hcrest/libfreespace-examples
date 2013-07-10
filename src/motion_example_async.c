@@ -47,6 +47,7 @@
 #include <freespace/freespace.h>
 #include <freespace/freespace_codecs.h>
 #include <freespace/freespace_printers.h>
+#include <freespace/freespace_util.h>
 #include "appControlHandler.h"
 #include <string.h>
 
@@ -66,35 +67,52 @@ static DWORD waitHandleCount = 0;
 static void init_waitset() {
 }
 
+/**
+ * add_pollfd
+ * This function is passed to freespace_setFileDescriptorCallbacks.
+ * It is called when a device handle needs to be added to the poll
+ * list.
+ */
 static void add_pollfd(FreespaceFileHandleType fd, short events) {
     DWORD i;
 
+	// Check if already in array
     for (i = 0; i < waitHandleCount; i++) {
         if (waitHandles[i] == fd) {
             return;
         }
     }
 
+	// Check if array is full
     if (waitHandleCount >= MAXIMUM_WAIT_OBJECTS) {
         printf("Waiting for too many handles!!!\n");
         return;
     }
 
+	// Add new handle to array
     waitHandles[waitHandleCount] = fd;
     waitHandleCount++;
 
     printf("Added a handle %p. Total handles = %d\n", fd, waitHandleCount);
 }
 
+/**
+ * remove_pollfd
+ * This function is passed to freespace_setFileDescriptorCallbacks.
+ * It is called when a device handle needs to be removed from the
+ * poll list.
+ */
 static void remove_pollfd(FreespaceFileHandleType fd) {
     DWORD i;
 
+	// Look for fd in array
     for (i = 0; i < waitHandleCount; i++) {
         if (waitHandles[i] == fd) {
             break;
         }
     }
 
+	// If fd was found in array, remove it and shift the array down if necessary
     if (i != waitHandleCount) {
         memmove(&waitHandles[i], &waitHandles[i + 1], (waitHandleCount - i - 1) * sizeof(HANDLE));
         waitHandleCount--;
@@ -152,23 +170,73 @@ static void remove_pollfd(FreespaceFileHandleType fd) {
 }
 #endif
 
+/**
+ * sendCallback
+ * This function is passed to freespace_sendMessageAsync.
+ * It receives the response from the message sent by the
+ * sendMessageAsync.
+ */
+static void sendCallback(FreespaceDeviceId id, void* cookie, int result) {
+	if (result != FREESPACE_SUCCESS) {
+		printf("Error %d.\n", result);
+        if (result == FREESPACE_ERROR_NOT_FOUND) {
+            freespace_closeDevice(id);
+        }
+	}
+}
+/**
+ * receiveMessageCallback
+ * This function is passed to freespace_setReceiveMessageCallback.
+ * It performs error handling or just status updates based on the
+ * value of result.
+ */
 static void receiveMessageCallback(FreespaceDeviceId id,
                             struct freespace_message * message,
                             void* cookie,
                             int result) {
-    printf("%d> ", id);
-    if (result == FREESPACE_SUCCESS) {
-        if (message != 0) {
-            freespace_printMessage(stdout, message);
-        }
-    } else {
-        printf("Error %d.\n", result);
-        if (result == FREESPACE_ERROR_NOT_FOUND) {
+	struct MultiAxisSensor acc;
+	int rc;
+
+    if (result == FREESPACE_ERROR_TIMEOUT ||
+        result == FREESPACE_ERROR_INTERRUPTED) {
+        // Both timeout and interrupted are ok.
+        // Timeout happens if there aren't any events for a second.
+        // Interrupted happens if you type CTRL-C or if you
+        // type CTRL-Z and background the app on Linux.
+        return;
+    }
+
+	// This indicates which device we are receiving
+	printf("%d> ", id);
+
+	// If the result was not a success there is a
+	// problem with the device
+    if (result != FREESPACE_SUCCESS) {
+		printf("Error %d.\n", result);
+		if (result == FREESPACE_ERROR_NOT_FOUND) {
             freespace_closeDevice(id);
         }
+        return;
     }
+
+	// If the message type is a MotionEngine output then use
+	// the freespace_util to extract the data
+	if (message->messageType == FREESPACE_MESSAGE_MOTIONENGINEOUTPUT) {
+        rc = freespace_util_getAccNoGravity(&(message->motionEngineOutput), &acc);
+        if (rc == 0) {
+            printf ("X: % 6.2f, Y: % 6.2f, Z: % 6.2f\n", acc.x, acc.y, acc.z);
+        }
+    } else if (message != 0) {
+        freespace_printMessage(stdout, message);
+	}
 }
 
+/**
+ * initDevice
+ * This function opens a handle to the device corresponding to
+ * the given deviceId. It registers the device with the message
+ * callback function and sets it up for streaming motion data.
+ */
 static void initDevice(FreespaceDeviceId id) {
     struct freespace_message message;
     struct freespace_DataModeRequest * req;
@@ -194,54 +262,33 @@ static void initDevice(FreespaceDeviceId id) {
         return;
     }
 
-
+	// Register the receive message callback function
     freespace_setReceiveMessageCallback(id, receiveMessageCallback, NULL);
 
-    printf("Sending message to enable body-frame motion data.\n");
-    memset(&message, 0, sizeof(message));
-    if (FREESPACE_SUCCESS == freespace_isNewDevice(id)) {
-        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-        req2 = &message.dataModeControlV2Request;
-        req2->packetSelect = 2;
-        req2->modeAndStatus |= 0 << 1;
-    } else {
-        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-        req = &(message.dataModeRequest);
-        req->enableBodyMotion = 1;
-        req->inhibitPowerManager = 1;
-    }
-    rc = freespace_sendMessageAsync(id, &message, 1000, NULL, NULL);
+    // Configure the device for motion outputs
+    printf("Sending message to enable motion data.\n");
+    memset(&message, 0, sizeof(message)); // Make sure all the message fields are initialized to 0.
+
+    message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+    message.dataModeControlV2Request.packetSelect = 8;        // MotionEngine Outout
+    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
+    message.dataModeControlV2Request.formatSelect = 0;        // MEOut format 0
+    message.dataModeControlV2Request.ff0 = 1;                 // Pointer fields
+	message.dataModeControlV2Request.ff2 = 1;                 // Acceleration fields
+    
+    rc = freespace_sendMessageAsync(id, &message, TIMEOUT_MAX, sendCallback, NULL);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);
     }
+
     /** --- END EXAMPLE INITIALIZATION OF DEVICE -- **/
 }
 
-static void cleanupDevice(FreespaceDeviceId id) {
-    struct freespace_message message;
-    int rc;
-
-    /** --- START EXAMPLE FINALIZATION OF DEVICE --- **/
-    printf("%d> Sending message to enable mouse motion data.\n", id);
-    memset(&message, 0, sizeof(message));
-    if (FREESPACE_SUCCESS == freespace_isNewDevice(id)) {
-        message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-        message.dataModeControlV2Request.packetSelect = 1;
-    } else {
-        message.messageType = FREESPACE_MESSAGE_DATAMODEREQUEST;
-        message.dataModeRequest.enableMouseMovement = 1;
-    }
-
-    rc = freespace_sendMessage(id, &message);
-    if (rc != FREESPACE_SUCCESS) {
-        printf("Could not send message: %d.\n", rc);
-    }
-
-    printf("%d> Cleaning up...\n", id);
-    freespace_closeDevice(id);
-    /** --- END EXAMPLE FINALIZATION OF DEVICE --- **/
-}
-
+/**
+ * hotplugCallback
+ * This function is called whenever a freespace device is inserted 
+ * or removed from the USB.
+ */
 static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId id, void* cookie) {
     if (event == FREESPACE_HOTPLUG_REMOVAL) {
         printf("Closing removed device %d\n", id);
@@ -252,12 +299,19 @@ static void hotplugCallback(enum freespace_hotplugEvent event, FreespaceDeviceId
     }
 }
 
-
+/**
+ * main
+ * This example collects motion from multiple devices simultaneously
+ * using the asynchronous
+ */
 int main(int argc, char* argv[]) {
     FreespaceDeviceId deviceIds[FREESPACE_MAXIMUM_DEVICE_COUNT];
-    int numIds;
-    int rc;
-    int quit;
+    int numIds;	// The number of device Ids found
+    int rc;		// Return Code
+
+	// Flag to indicate that the application should quit
+    // Set by the control signal handler
+    int quit = 0;
 
     printVersionInfo(argv[0]);
 
@@ -267,7 +321,7 @@ int main(int argc, char* argv[]) {
     rc = freespace_init();
     if (rc != FREESPACE_SUCCESS) {
         printf("Initialization error. rc=%d\n", rc);
-	return 1;
+		return 1;
     }
 
     init_waitset();
@@ -282,11 +336,12 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
+	// This will set the hotplug callback and catch the initial devices
     freespace_setDeviceHotplugCallback(hotplugCallback, NULL);
     freespace_setFileDescriptorCallbacks(add_pollfd, remove_pollfd);
     freespace_syncFileDescriptors();
-
     freespace_perform();
+
     while (!quit) {
         int timeoutMs;
 
@@ -298,6 +353,7 @@ int main(int argc, char* argv[]) {
         }
 #ifdef _WIN32
         {
+			// This polls all the handles in waitHandles and waits for timeoutMs.
             DWORD bResult = WaitForMultipleObjects(waitHandleCount, waitHandles, FALSE, (unsigned int) timeoutMs);
             if (bResult == WAIT_FAILED) {
                 printf("Error from WaitForMultipleObjects\n");
@@ -337,20 +393,27 @@ int main(int argc, char* argv[]) {
         }
 #endif
 #endif
+		// Once poll is completed this function services all of the
+		// handles in wait_handles
         freespace_perform();
     }
 
+	// Clean up all the devices at the end.
+	// This turns them all into mouse mode.
     printf("Cleaning up all devices...\n");
     rc = freespace_getDeviceList(deviceIds, FREESPACE_MAXIMUM_DEVICE_COUNT, &numIds);
     if (rc == FREESPACE_SUCCESS) {
         int i;
         for (i = 0; i < numIds; i++) {
-            cleanupDevice(deviceIds[i]);
+            // Close communications with the device
+			printf("%d> Cleaning up...\n", i);
+			freespace_closeDevice(deviceIds[i]);
         }
     } else {
         printf("Error getting device list.\n");
     }
 
+	// Cleanup the library
     freespace_exit();
 
     return 0;

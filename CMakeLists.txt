@@ -54,6 +54,9 @@ add_custom_command(TARGET game3d_example
 add_executable(firmware_version_example src/firmware_version_example.c ${APP_CTRL_SRCS})
 target_link_libraries(firmware_version_example ${LIBFREESPACE_LIBRARIES})
 
+add_executable(enable_mouse_example src/enable_mouse_example.c ${APP_CTRL_SRCS})
+target_link_libraries(enable_mouse_example ${LIBFREESPACE_LIBRARIES})
+
 if (CMAKE_COMPILER_IS_GNUCC)
 	add_definitions(-Wall) # TODO  should really set cflags
 endif()
