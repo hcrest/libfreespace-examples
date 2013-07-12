@@ -39,9 +39,6 @@ target_link_libraries(motion_example_async ${LIBFREESPACE_LIBRARIES})
 add_executable(communication_example src/communication_example.c ${APP_CTRL_SRCS})
 target_link_libraries(communication_example ${LIBFREESPACE_LIBRARIES})
 
-add_executable(multiple_device_example src/multiple_device_example.c ${APP_CTRL_SRCS})
-target_link_libraries(multiple_device_example ${LIBFREESPACE_LIBRARIES})
-
 add_executable(game3d_example src/game3d_example.c ${APP_CTRL_SRCS} ${MATH_SRCS})
 target_link_libraries(game3d_example ${LIBFREESPACE_LIBRARIES} ${pthread_lib_name})
 # Add this post-build command so that the exe can find the dll
