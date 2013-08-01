@@ -42,11 +42,12 @@ target_link_libraries(communication_example ${LIBFREESPACE_LIBRARIES})
 add_executable(game3d_example src/game3d_example.c ${APP_CTRL_SRCS} ${MATH_SRCS})
 target_link_libraries(game3d_example ${LIBFREESPACE_LIBRARIES} ${pthread_lib_name})
 # Add this post-build command so that the exe can find the dll
+if (WIN32)
 add_custom_command(TARGET game3d_example
 				POST_BUILD
 				COMMAND copy $(ProjectDir)dll\\pthreadVSE2.dll $(TargetDir)
 				COMMENT "copying pthreadVSE2.dll to $(TargetDir)")
-
+endif()
 
 add_executable(firmware_version_example src/firmware_version_example.c ${APP_CTRL_SRCS})
 target_link_libraries(firmware_version_example ${LIBFREESPACE_LIBRARIES})
