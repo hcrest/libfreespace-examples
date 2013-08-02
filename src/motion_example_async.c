@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2013, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -222,7 +222,7 @@ static void receiveMessageCallback(FreespaceDeviceId id,
 	// If the message type is a MotionEngine output then use
 	// the freespace_util to extract the data
 	if (message->messageType == FREESPACE_MESSAGE_MOTIONENGINEOUTPUT) {
-        rc = freespace_util_getAccNoGravity(&(message->motionEngineOutput), &acc);
+        rc = freespace_util_getAcceleration(&(message->motionEngineOutput), &acc);
         if (rc == 0) {
             printf ("X: % 6.2f, Y: % 6.2f, Z: % 6.2f\n", acc.x, acc.y, acc.z);
         }
@@ -274,7 +274,7 @@ static void initDevice(FreespaceDeviceId id) {
     message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
     message.dataModeControlV2Request.formatSelect = 0;        // MEOut format 0
     message.dataModeControlV2Request.ff0 = 1;                 // Pointer fields
-	message.dataModeControlV2Request.ff2 = 1;                 // Acceleration fields
+	message.dataModeControlV2Request.ff1 = 1;                 // Linear acceleration fields
     
     rc = freespace_sendMessageAsync(id, &message, TIMEOUT_MAX, sendCallback, NULL);
     if (rc != FREESPACE_SUCCESS) {

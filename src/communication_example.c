@@ -1,7 +1,7 @@
 /**
  * This file is part of libfreespace-examples.
  *
- * Copyright (c) 2009-2012, Hillcrest Laboratories, Inc.
+ * Copyright (c) 2009-2013, Hillcrest Laboratories, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
                 freespace_printMessage(stdout, &receive);
                 retryCount = 0;
             } else if (rc == FREESPACE_ERROR_TIMEOUT) {
-                printf("<timeout>  Try moving the Loop/FRCM to wake it up.\n");
+                printf("<timeout>  Try moving the Freespace device to wake it up.\n");
             } else if (rc == FREESPACE_ERROR_INTERRUPTED) {
                 printf("<interrupted>\n");
             } else {
