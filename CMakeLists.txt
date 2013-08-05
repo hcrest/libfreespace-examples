@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-project (freespace-examples C)
+project (libfreespace-examples C)
 
 set (PROJECT_VERSION_MAJOR 0)
 set (PROJECT_VERSION_MINOR 7)
