@@ -55,6 +55,12 @@ target_link_libraries(firmware_version_example ${LIBFREESPACE_LIBRARIES})
 add_executable(enable_mouse_example src/enable_mouse_example.c ${APP_CTRL_SRCS})
 target_link_libraries(enable_mouse_example ${LIBFREESPACE_LIBRARIES})
 
+add_executable(power_mgmt_example src/power_mgmt_example.c ${APP_CTRL_SRCS})
+target_link_libraries(power_mgmt_example ${LIBFREESPACE_LIBRARIES})
+
+add_executable(data_rate_example src/data_rate_example.c ${APP_CTRL_SRCS})
+target_link_libraries(data_rate_example ${LIBFREESPACE_LIBRARIES})
+
 if (CMAKE_COMPILER_IS_GNUCC)
 	add_definitions(-Wall) # TODO  should really set cflags
 endif()
