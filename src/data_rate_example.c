@@ -36,6 +36,8 @@
 #include "win32/stdafx.h"
 #include <stdio.h>
 #else
+#include <sys/time.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
 #define Sleep(x) usleep((x)*1000)
@@ -63,9 +65,15 @@
  * return - The time stamp in seconds.
  */
 double getTimeStamp() {
+#ifdef _WIN32
 	clock_t t;
 	t = clock();
 	return ((double)t)/((double)CLOCKS_PER_SEC);
+#else
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (double)tv.tv_usec/1e6 + (double)tv.tv_sec;
+#endif
 }
 
 /**
