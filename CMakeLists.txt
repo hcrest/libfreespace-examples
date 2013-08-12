@@ -61,6 +61,9 @@ target_link_libraries(power_mgmt_example ${LIBFREESPACE_LIBRARIES})
 add_executable(data_rate_example src/data_rate_example.c ${APP_CTRL_SRCS})
 target_link_libraries(data_rate_example ${LIBFREESPACE_LIBRARIES})
 
+add_executable(frs_prop_example src/frs_prop_example.c ${APP_CTRL_SRCS})
+target_link_libraries(frs_prop_example ${LIBFREESPACE_LIBRARIES})
+
 if (CMAKE_COMPILER_IS_GNUCC)
 	add_definitions(-Wall) # TODO  should really set cflags
 endif()
