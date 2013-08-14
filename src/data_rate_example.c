@@ -51,11 +51,21 @@
 #include <string.h>
 #include <time.h>
 
-
+// The sensor period to set the sensors to
+#define SENSOR_PERIOD 20000
+// The interval we use to calculate average sample period
 #define MOTION_INTERVAL 2
-#define MAX_WAIT_SECS 2
-#define BUFFER_SIZE 32
-
+// Number of average sample period measurements we will take
+#define MAX_ITERATIONS 5
+// The names corresponding to the sensor indices
+const char * const SENSOR_NAMES[] = {	
+					"Accelerometer", 
+					"Gyroscope", 
+					"Magnetometer", 
+					"Ambient Light Sensor",
+					"Pressure Sensor",
+					"Proximity Sensor",
+					"Sensor Fusion"         };
 
 /**
  * getTimeStamp
@@ -77,26 +87,6 @@ double getTimeStamp() {
 }
 
 /**
- * getSensorString
- * Gets the name of a sensor from it's index
- * sensor - The sensor index - see the HCOMM document
- * for more information.
- * str - A string to hold the return value.
- */
-void getSensorString(int sensor, char* str) {
-	switch (sensor) {
-	case 0: strcpy(str, "Accelerometer"); break;
-	case 1: strcpy(str, "Gyroscope"); break;
-	case 2: strcpy(str, "Magnetometer"); break;
-	case 3: strcpy(str, "Ambient Light Sensor"); break;
-	case 4: strcpy(str, "Pressure Sensor"); break;
-	case 5: strcpy(str, "Proximity Sensor"); break;
-	case 6: strcpy(str, "Sensor Fusion"); break;
-	default: strcpy(str, ""); break;
-	}
-}
-
-/**
  * sendSetSensorPeriodMessage
  * Sends a message to change the sample rate
  * of a sensor on a Freespace device.
@@ -104,16 +94,17 @@ void getSensorString(int sensor, char* str) {
  * sensor - The sensor index - see the HCOMM document
  * for more information
  * period - The desired period of the sensor in us.
- * return - 1 if successful, 0 if failed
+ * commit - 0 to write without commit, 1 to commit changes
+ * return - The return code of the message
  */
-int sendSetSensorPeriodMessage(FreespaceDeviceId device, int sensor, int period) {
+int sendSetSensorPeriodMessage(FreespaceDeviceId device, int sensor, int period, int commit) {
 	struct freespace_message message;
 
 	// Send the sensor period message with the user parameters
 	memset(&message, 0, sizeof(message)); // Make sure all the message fields are initialized to 0.
 
 	message.messageType = FREESPACE_MESSAGE_SENSORPERIODREQUEST;
-	message.sensorPeriodRequest.commit = 1;	// Need to commit change in order to work
+	message.sensorPeriodRequest.commit = commit;	// Need to commit change in order to work
 	message.sensorPeriodRequest.get = 0;  // We are setting, not getting
 	message.sensorPeriodRequest.sensor = sensor; // Sensor index - see the HCOMM doc for more info
 	message.sensorPeriodRequest.period = period; // Period in us
@@ -128,7 +119,7 @@ int sendSetSensorPeriodMessage(FreespaceDeviceId device, int sensor, int period)
  * device - The Freespace Device ID of the device
  * sensor - The sensor index - see the HCOMM document
  * for more information
- * return - 1 if successful, 0 if failed
+ * return - The return code of the message
  */
 int sendGetSensorPeriodMessage(FreespaceDeviceId device, int sensor) {
 	struct freespace_message message;
@@ -148,7 +139,7 @@ int sendGetSensorPeriodMessage(FreespaceDeviceId device, int sensor) {
  * Sends a message to the Freespace device to start
  * streaming motion data.
  * device - The Freespace Device ID of the device
- * return - 1 if successful, 0 if failed
+ * return - the return code of the message
  */
 int sendMotionRequestMessage(FreespaceDeviceId device) {
 	struct freespace_message message;
@@ -166,37 +157,6 @@ int sendMotionRequestMessage(FreespaceDeviceId device) {
 }
 
 /**
- * getInput
- * Function for collecting an integer input from
- * the user.
- * val - A pointer to where to store the input.
- * return - 1 if received valid input, 0 if did
- * not receive valid input.
- */
-int getInput(int* val) {
-	char buf[BUFFER_SIZE];
-	
-	fgets(buf, BUFFER_SIZE, stdin);
-	if (buf[0] == '\n') return 0;
-	else {
-		return sscanf(buf, "%d", val);
-	}
-}
-
-/**
- * printDataRate
- * Calculates and prints the average data rate based
- * on the given data.
- * elapsedTime - The interval the data was collected
- * samples - The amount of samples collected during
- * the interval.
- */
-void printDataRate(double elapsedTime, int samples) {
-	printf("Measured data period: %6.2f us", elapsedTime*1e6 / (double)samples);
-	printf(" (%d packets in %f seconds)\n", samples, elapsedTime);
-}
-
-/**
  * waitForPeriodResponse
  * Waits on a freespace message response to a
  * sensor period message. Waits up to MAX_WAIT_SECS
@@ -204,7 +164,7 @@ void printDataRate(double elapsedTime, int samples) {
  * device - The Freespace Device ID of the device
  * sensorValue - Pointer where the sensor index is stored
  * periodValue - Pointer where the period value is stored
- * return - -1 if message error, 0 if timeout, 1 if successful
+ * return - FREESPACE_SUCCESS if successful, or a FREESPACE_ERROR otherwise
  */
 int waitForPeriodResponse(FreespaceDeviceId device, int* sensorValue, int* periodValue) {
 	double lastTime = 0;
@@ -212,35 +172,65 @@ int waitForPeriodResponse(FreespaceDeviceId device, int* sensorValue, int* perio
 	struct freespace_message message;
 	
 	lastTime = getTimeStamp();
-	while (rc != FREESPACE_ERROR_INTERRUPTED) {
-		rc = freespace_readMessage(device, &message, 100);
-		if (rc == FREESPACE_ERROR_TIMEOUT) {
-			// Both timeout and interrupted are ok.
-			// Timeout happens if there aren't any events for a second.
-			// Interrupted happens if you type CTRL-C or if you
-			// type CTRL-Z and background the app on Linux.
 
-			if (getTimeStamp() > lastTime + MAX_WAIT_SECS) {
-				return 0;
-			}
-			continue;
-		}
+	// Keep looping if we get FREESPACE_SUCCESS but no SensorPeriodResponse
+	while (rc == FREESPACE_SUCCESS) {
+		rc = freespace_readMessage(device, &message, 200);
 		if (rc != FREESPACE_SUCCESS) {
-			printf("Error reading: %d. Quitting...\n", rc);
-			return -1;
+			return rc;
 		}
 		// Check if the sensor has given us a Sensor Period response
 		if (message.messageType == FREESPACE_MESSAGE_SENSORPERIODRESPONSE) {
-			*sensorValue = message.sensorPeriodResponse.sensor;
-			*periodValue = message.sensorPeriodResponse.period;
-			return 1;
-		} else {
-			if (getTimeStamp() > lastTime + MAX_WAIT_SECS) {
-				return 0;
-			}
+			if (sensorValue != NULL)
+				*sensorValue = message.sensorPeriodResponse.sensor;
+			if (periodValue != NULL)
+				*periodValue = message.sensorPeriodResponse.period;
+			return FREESPACE_SUCCESS;
 		}
 	}
 	return 0;
+}
+
+/**
+ * printSensorInfo
+ * Prints the sensor period information for a device's sensors.
+ * It sends a getSensorPeriod message for every sensor, then waits
+ * for the responses, each containing the period for a sensor.
+ * device - The Freespace Device ID of the device
+ * return - FREESPACE_SUCCESS if successful, or a FREESPACE_ERROR otherwise
+ */
+int printSensorInfo(FreespaceDeviceId device) {
+	int rc;
+	int index;
+	int sensor;
+	int period;
+
+	// Update sensor information
+	printf("\nSensors:\n");
+	for (index = 0;index < 7;index++) {
+		// Request the sensor period information
+		rc = sendGetSensorPeriodMessage(device, index);
+		if (rc != FREESPACE_SUCCESS) {
+			return rc;
+		}
+
+		// Wait for a response
+		rc = waitForPeriodResponse(device, &sensor, &period);
+
+		if (rc == FREESPACE_ERROR_TIMEOUT) { // Indicates timeout
+			printf("     %d. %s TIMED OUT.\n", index, SENSOR_NAMES[index]);
+		} else if (rc == FREESPACE_SUCCESS) {
+			printf("     %d. %s", sensor, SENSOR_NAMES[index]);
+			if (period != 0)
+				printf(" @ %d us.\n", period);
+			else
+				printf(" disabled.\n");
+		} else {
+			return rc;
+		}
+	}
+	return FREESPACE_SUCCESS;
+	printf("\n");
 }
 
 /**
@@ -249,7 +239,7 @@ int waitForPeriodResponse(FreespaceDeviceId device, int* sensorValue, int* perio
  *  - find a device
  *  - open the device found
  *  - read the sensor period values from the device
- *  - send a new sensor fusion period value to the device
+ *  - send a new value for the sensor periods on the device
  *  - stream motion data and measure the period
  * This example assume the device is already connected.
  */
@@ -259,14 +249,11 @@ int main(int argc, char* argv[]) {
     int numIds; // The number of device ID found
     int rc; // Return code
 	double lastTime = 0; // Used to measure intervals
-	int ticks = 0;	// Tracks the number of packets received
-	int index = 0;	// Loop variable
-	char str[BUFFER_SIZE]; //Holds sensor names
+	int iterations = 0;	// Tracks the number of measurements we make
+	int packets = 0;	// Tracks the number of packets received
+	int i = 0;	// Loop variable
 	int sensor = 0;	// Holds the sensor number
 	int period = 0; // Holds the period of the sensor
-	int inputValue = 0; // Holds the user input period
-	int fusionTimedOut = 0; // Flag to indicate sensor fusion timeout
-	int madeChange = 0; // Flag to indicate user changed a value
     // Flag to indicate that the application should quit
     // Set by the control signal handler
     int quit = 0;
@@ -294,7 +281,6 @@ int main(int argc, char* argv[]) {
     // Prepare to communicate with the device found above
     rc = freespace_openDevice(device);
     if (rc != FREESPACE_SUCCESS) {
-        printf("Error opening device: %d\n", rc);
         return 1;
     }
 
@@ -308,129 +294,52 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-	// First we gather information about our sensors.
-	printf("\nSensors:\n");
-	for (index = 0;index < 7;index++) {
-		if (quit) break;
-
-		// Request the sensor period information
-		rc = sendGetSensorPeriodMessage(device, index);
-		if (rc != FREESPACE_SUCCESS) {
-			printf("Could not send message: %d.\n", rc);
-			return -1;
-		}
-
-		// Wait for a response
-		rc = waitForPeriodResponse(device, &sensor, &period);
-		if (rc == -1) { // Indicates message failure
-			printf("Error getting sensor period info.\n");
-			return 1;
-		} else if (rc == 0) { // Indicates timeout
-			getSensorString(index, str);
-			printf("%d. %s TIMED OUT.\n", index, str);
-
-			// If sensor fusion timed out make value invalid
-			if (index == 6) fusionTimedOut = 1;
-		} else { // Indicates success
-			getSensorString(sensor, str);
-			printf("%d. %s", sensor, str);
-			if (period != 0)
-				printf(" @ %d us.\n", period);
-			else
-				printf(" disabled.\n");
-		}
-	}
-	printf("\n");
-
-	// Next we ask the user if they want to choose a sensor fusion value
-	// Skip this if sensor fusion timed out earlier
-	if (!quit && !fusionTimedOut) {
-		rc = -1;
-		while (!quit && rc < 0) {
-			inputValue = 0;
-			printf("New sensor fusion period (Enter to leave unchanged): ");
-			rc = getInput(&inputValue);
-			// This gives the computer a chance to detect SIGINT
-			// Why there is a delay? I don't know.
-			Sleep(5);
-			if (rc == 1) {
-				if (inputValue >= 0) {
-					// If user provides valid value
-					// then we send the new value
-					madeChange = 1;
-				} else rc = -1;
-			} else if (!quit) {
-				printf("Using default Sensor Fusion period.\n\n");
-			}
-		}
+	// Print out the sensor info
+	rc = printSensorInfo(device);
+	if (rc != FREESPACE_SUCCESS) {
+		printf("Error getting sensor info: %d\n", rc);
+		return 1;
 	}
 
-	if (!quit && madeChange) {
-		// Send the new value to the device
-		printf("Setting Sensor Fusion period to %d us.\n\n", inputValue);
-		rc = sendSetSensorPeriodMessage(device, 6, inputValue);
+	// Set all sensors to 20ms
+	printf("\nChanging sensor periods to %d...\n", SENSOR_PERIOD);
+	for (i = 0;i < 7;i++) {
+		if (i == 6) {	// If we are on last sensor we need to commit
+			rc = sendSetSensorPeriodMessage(device, i, SENSOR_PERIOD, 1);
+		} else {
+			rc = sendSetSensorPeriodMessage(device, i, SENSOR_PERIOD, 0);
+		}
 		if (rc != FREESPACE_SUCCESS) {
 			printf("Could not send message: %d.\n", rc);
 			return 1;
 		}
 		
-		// Wait for a response
+		// Wait for a response to the change
 		rc = waitForPeriodResponse(device, &sensor, &period);
-		if (rc == -1) { // Indicates message failure
-			printf("Error getting sensor period info.\n");
-			return 1;
-		} else if (rc == 0) { // Indicates timeout
-			getSensorString(6, str);
-			printf("6. %s TIMED OUT.\n", str);
-		} else { // Indicates success
-			getSensorString(sensor, str);
-			printf("%d. %s @ %d us.\n", sensor, str, period);
-		}
-
-		// Give the device time to commit changes
-		Sleep(500);
-
-		// Update sensor information
-		printf("\nSensors:\n");
-		for (index = 0;index < 7;index++) {
-			if (quit) break;
-			// Request the sensor period information
-			rc = sendGetSensorPeriodMessage(device, index);
-			if (rc != FREESPACE_SUCCESS) {
-				printf("Could not send message: %d.\n", rc);
-				return -1;
-			}
-
-			// Wait for a response
-			rc = waitForPeriodResponse(device, &sensor, &period);
-			if (rc == -1) { // Indicates message failure
-				printf("Error getting sensor period info.\n");
-				return 1;
-			} else if (rc == 0) { // Indicates timeout
-				getSensorString(index, str);
-				printf("%d. %s TIMED OUT.\n", index, str);
-			} else { // Indicates success
-				getSensorString(sensor, str);
-				printf("%d. %s", sensor, str);
-				if (period != 0)
-					printf(" @ %d us.\n", period);
-				else
-					printf(" disabled.\n");
-			}
-		}
-		printf("\n");
-	}
-
-	// Request the device stream motion to measure data rate
-	if (!quit) {
-		rc = sendMotionRequestMessage(device);
-		if (rc != FREESPACE_SUCCESS) {
-			printf("Could not send message: %d.\n", rc);
+		if (rc == FREESPACE_ERROR_TIMEOUT) {
+			printf("%s timed out.\n", SENSOR_NAMES[i]);
+		} else if (rc != FREESPACE_SUCCESS) {
+			printf("Failed with error code: %d.\n", rc);
 			return 1;
 		}
 	}
 
-	// A loop to read messages
+	// Give the device time to commit changes
+	Sleep(500);
+
+	// Print out the new sensor info
+	rc = printSensorInfo(device);
+	if (rc != FREESPACE_SUCCESS) {
+		printf("Error getting sensor info: %d\n", rc);
+		return 1;
+	}
+
+	printf("\n");
+
+	//Send message to request motion
+	sendMotionRequestMessage(device);
+
+	// A loop to read motion messages
 	lastTime = getTimeStamp();
 	while (!quit) {
 		rc = freespace_readMessage(device, &message, 100);
@@ -446,13 +355,28 @@ int main(int argc, char* argv[]) {
 			printf("Error reading: %d. Quitting...\n", rc);
 			break;
 		}
+
+		// If we receive a motion packet, increment the packet count
 		if (message.messageType == FREESPACE_MESSAGE_MOTIONENGINEOUTPUT) {
-			ticks++;
+			packets++;
 		}
+
+		/* Every MOTION_INTERVAL, calculate the average
+		 * sample period and display it.			*/
 		if ((getTimeStamp() - lastTime) > MOTION_INTERVAL) {
-			printDataRate((getTimeStamp() - lastTime), ticks);
-			ticks = 0;
+			printf("Measured data period: %6.2f us", 
+				(getTimeStamp() - lastTime)*1e6 / (double)packets);
+			printf(" (%d packets in %f seconds)\n", packets, 
+				(getTimeStamp() - lastTime));
+			packets = 0;
 			lastTime = getTimeStamp();
+			iterations++;
+		}
+
+		/* After MAX_ITERATIONS of calculating the average
+		 * sample period, finish.    */
+		if (iterations > MAX_ITERATIONS) {
+			break;
 		}
 	}
 
