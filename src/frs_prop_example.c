@@ -126,7 +126,6 @@ int sendFRSReadRequest(FreespaceDeviceId device,
 					   struct deviceInfo* pDeviceInfo) {
 	// Create and send a FRS read request message to the device
 	struct freespace_message message ;
-	int rc = 0;
 	uint16_t* pBlockSize = NULL;
 	uint16_t* pFRSType = NULL;
 	uint16_t* pOffset = NULL;

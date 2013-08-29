@@ -239,8 +239,6 @@ static void receiveMessageCallback(FreespaceDeviceId id,
  */
 static void initDevice(FreespaceDeviceId id) {
     struct freespace_message message;
-    struct freespace_DataModeRequest * req;
-    struct freespace_DataModeControlV2Request * req2;
     int rc;
 
     /** --- START EXAMPLE INITIALIZATION OF DEVICE -- **/
@@ -270,11 +268,11 @@ static void initDevice(FreespaceDeviceId id) {
     memset(&message, 0, sizeof(message)); // Make sure all the message fields are initialized to 0.
 
     message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-    message.dataModeControlV2Request.packetSelect = 8;        // MotionEngine Outout
-    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
-    message.dataModeControlV2Request.formatSelect = 0;        // MEOut format 0
-    message.dataModeControlV2Request.ff0 = 1;                 // Pointer fields
-	message.dataModeControlV2Request.ff1 = 1;                 // Linear acceleration fields
+    message.dataModeControlV2Request.packetSelect = 8; // MotionEngine Outout
+    message.dataModeControlV2Request.mode = 0;         // Set full motion
+    message.dataModeControlV2Request.formatSelect = 0; // MEOut format 0
+    message.dataModeControlV2Request.ff0 = 1;          // Pointer fields
+	message.dataModeControlV2Request.ff1 = 1;          // Linear acceleration fields
     
     rc = freespace_sendMessageAsync(id, &message, TIMEOUT_MAX, sendCallback, NULL);
     if (rc != FREESPACE_SUCCESS) {

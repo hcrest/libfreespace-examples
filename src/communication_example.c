@@ -49,6 +49,7 @@
 #ifdef _WIN32
 #define SLEEP    Sleep(200)
 #else
+#include <unistd.h>
 #define SLEEP    sleep(1)
 #endif
 

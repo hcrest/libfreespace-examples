@@ -251,11 +251,11 @@ static void* inputThreadFunction(void* arg) {
     // Put the device in the right operating mode
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-    message.dataModeControlV2Request.packetSelect = 8;        // MEOut
-    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
-    message.dataModeControlV2Request.formatSelect = 0;        // MEOut format 0
-    message.dataModeControlV2Request.ff1 = 1;                 // Acceleration fields
-    message.dataModeControlV2Request.ff6 = 1;                 // Angular (orientation) fields
+    message.dataModeControlV2Request.packetSelect = 8; // MEOut
+    message.dataModeControlV2Request.mode = 0;         // Set full motion
+    message.dataModeControlV2Request.formatSelect = 0; // MEOut format 0
+    message.dataModeControlV2Request.ff1 = 1;          // Acceleration fields
+    message.dataModeControlV2Request.ff6 = 1;          // Angular (orientation) fields
     
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
@@ -292,8 +292,8 @@ static void* inputThreadFunction(void* arg) {
     printf("\n\nfreespaceInputThread: Cleaning up...\n");
     memset(&message, 0, sizeof(message));
     message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-    message.dataModeControlV2Request.packetSelect = 1;        // Mouse packets
-    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
+    message.dataModeControlV2Request.packetSelect = 1;  // Mouse packets
+    message.dataModeControlV2Request.mode = 0;          // Set full motion
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("freespaceInputThread: Could not send message: %d.\n", rc);

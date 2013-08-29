@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     memset(&message, 0, sizeof(message)); // Init message fields to 0
     message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
     message.dataModeControlV2Request.packetSelect = 1;        // Mouse packet
-    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
+    message.dataModeControlV2Request.mode = 0; // Set full motion
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
         printf("Could not send message: %d.\n", rc);

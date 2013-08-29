@@ -193,10 +193,10 @@ int main(int argc, char* argv[]) {
     memset(&message, 0, sizeof(message)); // Make sure all the message fields are initialized to 0.
 
     message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-    message.dataModeControlV2Request.packetSelect = 8;        // MotionEngine Output
-    message.dataModeControlV2Request.modeAndStatus |= 4 << 1; // Set full motion on
-    message.dataModeControlV2Request.formatSelect = 1;        // MEOut format 1
-    message.dataModeControlV2Request.ff7 = 1;                 // ActClass/PowerMgmt
+    message.dataModeControlV2Request.packetSelect = 8; // MotionEngine Output
+    message.dataModeControlV2Request.mode = 4;         // Set full motion on
+    message.dataModeControlV2Request.formatSelect = 1; // MEOut format 1
+    message.dataModeControlV2Request.ff7 = 1;          // ActClass/PowerMgmt
     
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
