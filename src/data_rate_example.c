@@ -150,7 +150,7 @@ int sendMotionRequestMessage(FreespaceDeviceId device) {
 
     message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
     message.dataModeControlV2Request.packetSelect = 8;        // MotionEngine Outout
-    message.dataModeControlV2Request.modeAndStatus |= 4 << 1; // Set full motion - always on
+    message.dataModeControlV2Request.mode = 4; // Set full motion - always on
 	message.dataModeControlV2Request.formatSelect = 1;
     
     return freespace_sendMessage(device, &message);
@@ -167,11 +167,8 @@ int sendMotionRequestMessage(FreespaceDeviceId device) {
  * return - FREESPACE_SUCCESS if successful, or a FREESPACE_ERROR otherwise
  */
 int waitForPeriodResponse(FreespaceDeviceId device, int* sensorValue, int* periodValue) {
-	double lastTime = 0;
 	int rc = 0;
 	struct freespace_message message;
-	
-	lastTime = getTimeStamp();
 
 	// Keep looping if we get FREESPACE_SUCCESS but no SensorPeriodResponse
 	while (rc == FREESPACE_SUCCESS) {
