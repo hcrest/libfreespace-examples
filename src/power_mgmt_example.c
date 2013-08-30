@@ -47,13 +47,96 @@
 
 #include <string.h>
 
+
+/**
+ * printFlags
+ * This function checks for a change in Activity
+ * Classification, or for a Power Management
+ * Event Flag, and prints the meaning for each
+ * flag.
+ * ACPM - The MultiAxisSensor holding the most recent
+ * Activity Classification and Power Management Flags.
+ * lastACPM - The MultiAxisSensor holding the previous
+ * Activity Classification and Power Management Flags.
+ */
+void printFlags(struct MultiAxisSensor ACPM, struct MultiAxisSensor lastACPM) {
+	// Activity classification is in the x-coordinate
+	int actClass = (int)ACPM.x;
+	int lastActClass = (int)lastACPM.x;
+	// Power management flags are in the y-coordinate
+	int powerFlags = (int)ACPM.y;
+	int lastPowerFlags = (int)lastACPM.y;
+	// These are for formatting
+	int needComma = 0;
+	int needNewLine = 0;
+	// If the activity class has changed then display it
+	if (actClass != lastActClass) {
+		printf("Activity Class: ");
+		switch (actClass) {
+		case 0: printf("Unknown.    "); break;
+		case 1: printf("On table.   "); break;
+		case 2: printf("Stationary. "); break;
+		case 3: printf("Stable.     "); break;
+		case 4: printf("Motion.     "); break;
+		}
+		needNewLine = 1;
+	}
+	// If the power management flags are not empy and have changed
+	// then display them
+	if (powerFlags != 0 && powerFlags != lastPowerFlags) {
+		printf("Event: ");
+		// LSB is "on table" flag
+		if ((powerFlags) % 2) {
+			printf("On table");
+			needComma = 1;
+		}
+
+		// bit 1 is "stable" flag
+		if ((powerFlags >> 1) % 2) {
+			if (needComma) {
+				printf(", is stable");
+			} else {
+				printf("Is stable");
+				needComma = 1;
+			}
+		}
+
+		// bit 2 is "motion detected by accelerometer" flag
+		if ((powerFlags >> 2) % 2) {
+			if (needComma) {
+				printf(", motion detected by accelerometer");
+			} else {
+				printf("Motion detected by accelerometer");
+				needComma = 1;
+			}
+		}
+
+		// MSB is "motion detected by MotionEngine" flag
+		if ((powerFlags >> 3) % 2) {
+			if (needComma) {
+				printf(", motion detected by MotionEngine");
+			} else {
+				printf("MotionDetected by MotionEngine");
+				needComma = 1;
+			}
+		}
+		printf(".");
+		needNewLine = 1;
+	}
+	if (needNewLine)
+		printf("\n");
+}
+
+
+
 /**
  * main
  * This example uses the synchronous API to
  *  - find a device
  *  - open the device found
- *  - configure the device to output motion
- *  - read motion messages sent by the device
+ *  - configure the device to output Activity Classification
+ *  and Power Management Flags
+ *  - Read the responses and print their meanings
  * This example assume the device is already connected.
  */
 int main(int argc, char* argv[]) {
@@ -61,8 +144,8 @@ int main(int argc, char* argv[]) {
     FreespaceDeviceId device;
     int numIds; // The number of device ID found
     int rc; // Return code
-    struct MultiAxisSensor pointer;
-    struct MultiAxisSensor angVel;
+    struct MultiAxisSensor ACPM;
+	struct MultiAxisSensor lastACPM = {0, 0, 0, 0};
 
     // Flag to indicate that the application should quit
     // Set by the control signal handler
@@ -110,11 +193,10 @@ int main(int argc, char* argv[]) {
     memset(&message, 0, sizeof(message)); // Make sure all the message fields are initialized to 0.
 
     message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
-    message.dataModeControlV2Request.packetSelect = 8;        // MotionEngine Outout
-    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
-    message.dataModeControlV2Request.formatSelect = 0;        // MEOut format 0
-    message.dataModeControlV2Request.ff0 = 1;                 // Pointer fields
-    message.dataModeControlV2Request.ff3 = 1;                 // Angular velocity fields
+    message.dataModeControlV2Request.packetSelect = 8;        // MotionEngine Output
+    message.dataModeControlV2Request.modeAndStatus |= 4 << 1; // Set full motion on
+    message.dataModeControlV2Request.formatSelect = 1;        // MEOut format 1
+    message.dataModeControlV2Request.ff7 = 1;                 // ActClass/PowerMgmt
     
     rc = freespace_sendMessage(device, &message);
     if (rc != FREESPACE_SUCCESS) {
@@ -138,11 +220,12 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        // freespace_printMessage(stdout, &message); // This just prints the basic message fields
+		// With each packet print the ACPM if it has changed
         if (message.messageType == FREESPACE_MESSAGE_MOTIONENGINEOUTPUT) {
-            rc = freespace_util_getAngularVelocity(&message.motionEngineOutput, &angVel);
+            rc = freespace_util_getActClass(&message.motionEngineOutput, &ACPM);
             if (rc == 0) {
-                printf ("X: % 6.2f, Y: % 6.2f, Z: % 6.2f\n", angVel.x, angVel.y, angVel.z);
+                printFlags(ACPM, lastACPM);
+				lastACPM = ACPM;
             }
         }
     }

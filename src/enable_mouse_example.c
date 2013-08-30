@@ -34,43 +34,35 @@
 
 #ifdef _WIN32
 #include "win32/stdafx.h"
-#else
 #include <stdio.h>
+#else
 #include <stdlib.h>
+#include <signal.h>
 #endif
 
 #include <freespace/freespace.h>
-#include <freespace/freespace_codecs.h>
+#include <freespace/freespace_util.h>
 #include <freespace/freespace_printers.h>
 #include "appControlHandler.h"
+
 #include <string.h>
-
-// Cross platform sleep macro
-#ifdef _WIN32
-#define SLEEP    Sleep(200)
-#else
-#define SLEEP    sleep(1)
-#endif
-
-// Limit on how many times to try to get a response
-#define RETRY_COUNT_LIMIT 100
 
 /**
  * main
- * This example uses the synchronous API to 
+ * This example uses the synchronous API to
  *  - find a device
  *  - open the device found
- *  - send a message
- *  - look for a response
- * This example assumes that the device is already connected.
+ *  - configure the device to output motion
+ *  - read motion messages sent by the device
+ * This example assume the device is already connected.
  */
 int main(int argc, char* argv[]) {
-    FreespaceDeviceId device;                       // Keep track of the device you are talking to
-    struct freespace_message send;                  // A place to create messages to send to the device
-    struct freespace_message receive;               // A place to put a message received from the device
-    int numIds;                                     // Keep track of how many devices are available
-    int rc;                                         // Return Code
-    int retryCount = 0;                             // How many times tried so far to get a response
+    struct freespace_message message;
+    FreespaceDeviceId device;
+    int numIds; // The number of device ID found
+    int rc; // Return code
+    //struct MultiAxisSensor pointer;
+    //struct MultiAxisSensor angVel;
 
     // Flag to indicate that the application should quit
     // Set by the control signal handler
@@ -88,7 +80,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Scanning for Freespace devices...\n");
-    // Get the ID of the first device in the list of availble devices
+     // Get the ID of the first device in the list of availble devices
     rc = freespace_getDeviceList(&device, 1, &numIds);
     if (numIds == 0) {
         printf("Didn't find any devices.\n");
@@ -113,47 +105,22 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    printf("Requesting battery level messages.\n");
-
-    memset(&send, 0, sizeof(send)); // Start with a clean message struct
-    // Populate the message fields. Two options are shown below. Uncomment one desired
-    // and comment out the one not desired.
-    //send.messageType = FREESPACE_MESSAGE_BATTERYLEVELREQUEST; // To send a battery level request
-    send.messageType = FREESPACE_MESSAGE_PRODUCTIDREQUEST;    // To send a product ID request
-
-    while (!quit) {
-        if (retryCount < RETRY_COUNT_LIMIT) {
-            retryCount++;
-            // Send the message constructed above.
-            rc = freespace_sendMessage(device, &send);
-            if (rc != FREESPACE_SUCCESS) {
-                printf("Could not send message: %d.\n", rc);
-            }
-
-            // Read the response message.
-            rc = freespace_readMessage(device, &receive, 100);
-            if (rc == FREESPACE_SUCCESS) {
-                // Print the received message
-                freespace_printMessage(stdout, &receive);
-                retryCount = 0;
-            } else if (rc == FREESPACE_ERROR_TIMEOUT) {
-                printf("<timeout>  Try moving the Freespace device to wake it up.\n");
-            } else if (rc == FREESPACE_ERROR_INTERRUPTED) {
-                printf("<interrupted>\n");
-            } else {
-                printf("Error reading: %d. Quitting...\n", rc);
-                break;
-            }
-        } else {
-            printf("Did not receive response after %d trials\n", RETRY_COUNT_LIMIT);
-            quit = 1;
-        }
-        SLEEP;
+    // Cleanup when done and configure the device to output mouse packets
+    printf("Sending message to enable mouse data.\n");
+    memset(&message, 0, sizeof(message)); // Init message fields to 0
+    message.messageType = FREESPACE_MESSAGE_DATAMODECONTROLV2REQUEST;
+    message.dataModeControlV2Request.packetSelect = 1;        // Mouse packet
+    message.dataModeControlV2Request.modeAndStatus |= 0 << 1; // Set full motion
+    rc = freespace_sendMessage(device, &message);
+    if (rc != FREESPACE_SUCCESS) {
+        printf("Could not send message: %d.\n", rc);
     }
 
+    // Close communications with the device
     printf("Cleaning up...\n");
     freespace_closeDevice(device);
 
+    // Cleanup the library
     freespace_exit();
 
     return 0;
