@@ -52,7 +52,7 @@
 #include <time.h>
 
 // The sensor period to set the sensors to
-#define SENSOR_PERIOD 20000
+#define SENSOR_PERIOD 10000
 // The interval we use to calculate average sample period
 #define MOTION_INTERVAL 2
 // Number of average sample period measurements we will take
